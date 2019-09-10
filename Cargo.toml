@@ -1,0 +1,11 @@
+[package]
+name = "clr-profiler"
+version = "0.1.0"
+authors = ["Camden Reslink <camdenreslink@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+libc = "0.2"
+
+[lib]
+crate-type = ["cdylib"]
