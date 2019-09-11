@@ -20,3 +20,24 @@
 Some Helpful Resources:
 - Docs on some of the weird Windows specific types (LPVOID, DWORD, HINSTANCE, etc...)
   - https://en.wikibooks.org/wiki/Windows_Programming/Handles_and_Data_Types
+
+## Some Links
+
+- https://github.com/DataDog/dd-trace-dotnet
+- https://docs.datadoghq.com/tracing/setup/dotnet/?tab=netcoreonlinux
+- https://docs.microsoft.com/en-us/dotnet/framework/unmanaged-api/profiling/icorprofilercallback2-interface
+- https://docs.microsoft.com/en-us/dotnet/framework/unmanaged-api/profiling/setting-up-a-profiling-environment
+- https://github.com/microsoft/clr-samples/tree/master/ProfilingAPI
+- https://github.com/microsoft/BPerf
+- https://stackoverflow.com/questions/840501/how-do-function-pointers-in-c-work
+- https://www.codeguru.com/cpp/com-tech/activex/misc/article.php/c5509/Simplifying-the-Concept-of-COM.htm
+- https://docs.microsoft.com/en-us/windows/win32/com/implementing-iclassfactory
+- https://docs.microsoft.com/en-us/windows/win32/api/unknwn/
+- https://github.com/Rantanen/intercom/blob/master/intercom-common/src/attributes/com_library.rs#L87
+- https://stackoverflow.com/questions/26117197/create-interface-to-c-function-pointers-in-rust
+- https://www.reddit.com/r/rust/comments/4w6vjt/allocating_a_raw_double_pointer_in_rust/
+- https://newrustacean.com/show_notes/e031/index.html
+- http://jakegoulding.com/rust-ffi-omnibus/objects/
+- https://docs.rs/libc/0.2.63/libc/enum.c_void.html
+- https://docs.rs/winapi/0.3.8/winapi/ctypes/type.c_long.html
+- https://docs.rs/intercom/0.2.0/intercom/struct.GUID.html
