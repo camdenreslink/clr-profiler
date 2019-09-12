@@ -41,3 +41,37 @@ Some Helpful Resources:
 - https://docs.rs/libc/0.2.63/libc/enum.c_void.html
 - https://docs.rs/winapi/0.3.8/winapi/ctypes/type.c_long.html
 - https://docs.rs/intercom/0.2.0/intercom/struct.GUID.html
+- https://opensource.stackexchange.com/questions/5143/how-to-mark-a-copied-apache-v2-piece-of-code
+- https://www.codeproject.com/Articles/13601/COM-in-plain-C#CLASS
+- https://gankra.github.io/blah/rust-layouts-and-abis/
+
+## Some Types That I Need To Define
+
+- ICorProfilerInfo (for the Initialize method, which takes an IUnkown)
+- ULONG
+- AppDomainID
+- AssemblyID
+- ModuleID
+- ClassID
+- FunctionID
+- BOOL
+- COR_PRF_JIT_CACHE
+- ThreadID
+- DWORD
+- COR_PRF_TRANSITION_REASON
+- COR_PRF_SUSPEND_REASON
+- ObjectID
+- UINT_PTR
+- REFGUID
+- WCHAR
+- COR_PRF_GC_REASON
+- COR_PRF_GC_ROOT_KIND
+- COR_PRF_GC_ROOT_FLAGS
+- GCHandleID
+- ReJITID
+- mdMethodDef
+- ICorProfilerFunctionControl
+- SIZE_T
+- ICorProfilerAssemblyReferenceProvider
+- LPCBYTE
+- 
