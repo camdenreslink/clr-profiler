@@ -27,22 +27,22 @@ pub const S_OK: HRESULT = 0;
 pub const E_NOINTERFACE: HRESULT = 0x8000_4002;
 
 #[allow(overflowing_literals)]
-pub const E_POINTER: HRESULT = 0x8000_4003;
-
-#[allow(overflowing_literals)]
-pub const E_INVALIDARG: HRESULT = 0x8007_0057;
-
-#[allow(overflowing_literals)]
 pub const E_OUTOFMEMORY: HRESULT = 0x8007_000E;
-
-#[allow(overflowing_literals)]
-pub const E_UNEXPECTED: HRESULT = 0x8000_FFFF;
 
 #[allow(overflowing_literals)]
 pub const CLASS_E_NOAGGREGATION: HRESULT = 0x8004_0110;
 
 #[allow(overflowing_literals)]
 pub const E_FAIL: HRESULT = 0x8000_4005;
+
+#[allow(overflowing_literals)]
+pub const COR_E_INVALIDPROGRAM: HRESULT = 0x8013_153A;
+
+#[allow(overflowing_literals)]
+pub const COR_E_INVALIDOPERATION: HRESULT = 0x8013_1509;
+
+#[allow(overflowing_literals)]
+pub const COR_E_INDEXOUTOFRANGE: HRESULT = 0x8;
 
 #[repr(C)]
 #[derive(Debug)]
@@ -61,6 +61,7 @@ pub type REFIID = *const IID;
 
 pub type LPVOID = *mut c_void;
 
+#[repr(C)]
 pub struct IUnknownVtbl {
     pub QueryInterface: extern "system" fn(
         This: *mut IUnknown,
@@ -71,10 +72,12 @@ pub struct IUnknownVtbl {
     pub Release: extern "system" fn(This: *mut IUnknown) -> ULONG,
 }
 
+#[repr(C)]
 pub struct IUnknown {
     pub lpVtbl: *const IUnknownVtbl,
 }
 
+#[repr(C)]
 pub struct IClassFactoryVtbl {
     pub parent: IUnknownVtbl,
     pub CreateInstance: extern "system" fn(
@@ -86,8 +89,50 @@ pub struct IClassFactoryVtbl {
     pub LockServer: extern "system" fn(This: *mut IClassFactory, fLock: BOOL) -> HRESULT,
 }
 
+#[repr(C)]
 pub struct IClassFactory {
     pub lpVtbl: *const IClassFactoryVtbl,
 }
 
-trait ClassFactory {}
+pub trait Unknown {
+    fn query_interface(&mut self, interface_identifier: GUID) -> Result<&Self, HRESULT>;
+    fn add_ref(&mut self) -> ULONG;
+    fn release(&mut self) -> ULONG;
+}
+
+impl<T> From<T> for IUnknown
+where
+    T: Unknown,
+{
+    fn from(item: T) -> IUnknown {
+        extern "system" fn query_interface(
+            This: *mut IUnknown,
+            riid: REFIID,
+            ppvObject: *mut *mut c_void,
+        ) -> HRESULT {
+            println!("Hit query_interface!");
+            unsafe {
+                *ppvObject = This as *mut c_void;
+            }
+            S_OK
+        }
+
+        extern "system" fn add_ref(This: *mut IUnknown) -> ULONG {
+            println!("Hit add_ref!");
+            0
+        }
+
+        extern "system" fn release(This: *mut IUnknown) -> ULONG {
+            println!("Hit release!");
+            0
+        }
+
+        IUnknown {
+            lpVtbl: &IUnknownVtbl {
+                QueryInterface: query_interface,
+                AddRef: add_ref,
+                Release: release,
+            },
+        }
+    }
+}

@@ -44,6 +44,7 @@ Some Helpful Resources:
 - https://opensource.stackexchange.com/questions/5143/how-to-mark-a-copied-apache-v2-piece-of-code
 - https://www.codeproject.com/Articles/13601/COM-in-plain-C#CLASS
 - https://gankra.github.io/blah/rust-layouts-and-abis/
+- https://docs.rs/intercom/0.2.0/src/intercom/combox.rs.html#105-134
 
 ## Some Types That I Need To Define
 

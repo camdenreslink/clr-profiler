@@ -1,0 +1,10 @@
+#[non_exhaustive]
+pub enum Error {
+    E_FAIL,
+    E_NOINTERFACE,
+    CLASS_E_NOAGGREGATION,
+    E_OUTOFMEMORY,
+    COR_E_INVALIDPROGRAM,
+    COR_E_INVALIDOPERATION,
+    COR_E_INDEXOUTOFRANGE,
+}

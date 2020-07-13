@@ -1,3 +1,6 @@
+mod class_factory;
+mod errors;
+mod traits;
 mod winapi;
 
 use core::ffi::c_void;
@@ -6,9 +9,14 @@ use winapi::{
     REFIID, S_OK, ULONG,
 };
 
+////////////////////////////////////
+// ClrProfiler.register(profiler);
+
+////////////////////////////////////
+
 #[no_mangle]
 #[allow(overflowing_literals)]
-pub unsafe extern "C" fn DllGetClassObject(
+unsafe extern "C" fn DllGetClassObject(
     rclsid: REFCLSID,
     riid: REFIID,
     ppv: *mut LPVOID,
