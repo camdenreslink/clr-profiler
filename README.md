@@ -76,3 +76,7 @@ Some Helpful Resources:
 - ICorProfilerAssemblyReferenceProvider
 - LPCBYTE
 - 
+
+## TODO
+
+- Some header file function signatures have `_Out_writes_to_` annotations. How does this translate into parameters in my rust function signature?
