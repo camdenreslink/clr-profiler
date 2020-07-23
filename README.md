@@ -80,3 +80,4 @@ Some Helpful Resources:
 ## TODO
 
 - Some header file function signatures have `_Out_writes_to_` annotations. How does this translate into parameters in my rust function signature?
+- I may be able to make the ffi layer a little cleaner by adding some traits. For example, creating a `ComRefCount` trait that has to have a getter method to a `ref_count` field. Then I can create an `IUnknown` trait which depends on `ComRefCount` with a default implementation using the getter method. Then any COM coclass could just implement that trait and be done. Similar traits could be created for all other interfaces. The trait could have another method called `get_vtbl()`, which returns the trait methods as a struct of function pointers in the required order.

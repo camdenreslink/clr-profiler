@@ -2,7 +2,7 @@ mod errors;
 mod ffi;
 mod traits;
 
-use ffi::{ClassFactory, CorProfilerCallback, E_FAIL, HRESULT, LPVOID, REFCLSID, REFIID, S_OK};
+use ffi::{ClassFactory, CorProfilerCallback, E_FAIL, HRESULT, LPVOID, REFCLSID, REFIID};
 
 #[no_mangle]
 unsafe extern "system" fn DllGetClassObject(
@@ -10,7 +10,7 @@ unsafe extern "system" fn DllGetClassObject(
     riid: REFIID,
     ppv: *mut LPVOID,
 ) -> HRESULT {
-    if ppv.is_null() || *rclsid != CorProfilerCallback::clsid {
+    if ppv.is_null() || *rclsid != CorProfilerCallback::CLSID {
         println!("rclsid isn't correct.");
         E_FAIL
     } else {

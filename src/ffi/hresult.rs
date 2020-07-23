@@ -1,5 +1,5 @@
 #![allow(overflowing_literals)]
-use super::c_long;
+use crate::ffi::c_long;
 
 pub type HRESULT = c_long;
 

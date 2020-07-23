@@ -1,42 +1,18 @@
-use crate::errors::Error;
+use crate::{
+    errors::Error,
+    ffi::{
+        int, mdMethodDef, AppDomainID, AssemblyID, ClassID, CorProfilerAssemblyReferenceProvider,
+        CorProfilerFunctionControl, CorProfilerInfo, FunctionID, GCHandleID, ModuleID, ObjectID,
+        ReJITID, ThreadID, BOOL, COR_PRF_GC_REASON, COR_PRF_GC_ROOT_FLAGS, COR_PRF_GC_ROOT_KIND,
+        COR_PRF_JIT_CACHE, COR_PRF_SUSPEND_REASON, COR_PRF_TRANSITION_REASON, DWORD, GUID, HRESULT,
+        LPCBYTE, REFGUID, SIZE_T, UINT, UINT_PTR, ULONG, WCHAR,
+    },
+};
+use std::ffi::c_void;
 use uuid::Uuid;
 
-type FunctionID = i32;
-type IUnknown = i32;
-type AppDomainID = i32;
-type HRESULT = i32;
-type AssemblyID = i32;
-type ModuleID = i32;
-type ClassID = i32;
-type BOOL = i32;
-type COR_PRF_JIT_CACHE = i32;
-type thread_id = i32;
-type DWORD = i32;
-type GUID = i32;
-type COR_PRF_TRANSITION_REASON = i32;
-type COR_PRF_SUSPEND_REASON = i32;
-type ObjectID = i32;
-type ULONG = i32;
-type UINT_PTR = i32;
-type REFGUID = i32;
-type VOID = i32;
-type ThreadID = i32;
-type WCHAR = i32;
-type int = i32;
-type COR_PRF_GC_REASON = i32;
-type COR_PRF_GC_ROOT_KIND = i32;
-type COR_PRF_GC_ROOT_FLAGS = i32;
-type GCHandleID = i32;
-type UINT = i32;
-type ReJITID = i32;
-type mdMethodDef = i32;
-type ICorProfilerFunctionControl = i32;
-type SIZE_T = i32;
-type ICorProfilerAssemblyReferenceProvider = i32;
-type LPCBYTE = i32;
-
 pub trait CorProfilerCallback {
-    fn initialize(p_icorprofiler_info_unk: IUnknown) -> Result<(), Error>;
+    fn initialize(p_icorprofiler_info_unk: CorProfilerInfo) -> Result<(), Error>;
 
     fn shutdown() -> Result<(), Error>;
 
@@ -168,16 +144,16 @@ pub trait CorProfilerCallback {
         Ok(())
     }
 
-    fn thread_created(thread_id: thread_id) -> Result<(), Error> {
+    fn thread_created(thread_id: ThreadID) -> Result<(), Error> {
         Ok(())
     }
 
-    fn thread_destroyed(thread_id: thread_id) -> Result<(), Error> {
+    fn thread_destroyed(thread_id: ThreadID) -> Result<(), Error> {
         Ok(())
     }
 
     fn thread_assigned_to_os_thread(
-        managed_thread_id: thread_id,
+        managed_thread_id: ThreadID,
         os_thread_id: DWORD,
     ) -> Result<(), Error> {
         Ok(())
@@ -249,11 +225,11 @@ pub trait CorProfilerCallback {
         Ok(())
     }
 
-    fn runtime_thread_suspended(thread_id: thread_id) -> Result<(), Error> {
+    fn runtime_thread_suspended(thread_id: ThreadID) -> Result<(), Error> {
         Ok(())
     }
 
-    fn runtime_thread_resumed(thread_id: thread_id) -> Result<(), Error> {
+    fn runtime_thread_resumed(thread_id: ThreadID) -> Result<(), Error> {
         Ok(())
     }
 
@@ -350,7 +326,7 @@ pub trait CorProfilerCallback {
     fn com_classic_vtable_created(
         wrapped_class_id: ClassID,
         implemented_iid: REFGUID,
-        p_vtable: VOID,
+        p_vtable: *const c_void,
         c_slots: ULONG,
     ) -> Result<(), Error> {
         Ok(())
@@ -359,7 +335,7 @@ pub trait CorProfilerCallback {
     fn com_classic_vtable_destroyed(
         wrapped_class_id: ClassID,
         implemented_iid: REFGUID,
-        p_vtable: VOID,
+        p_vtable: *const c_void,
     ) -> Result<(), Error> {
         Ok(())
     }
@@ -402,8 +378,8 @@ pub trait CorProfilerCallback2: CorProfilerCallback {
     }
 
     fn finalizeable_object_queued(
-        finalizer_Flags: DWORD,
-        object_ID: ObjectID,
+        finalizer_flags: DWORD,
+        object_id: ObjectID,
     ) -> Result<(), Error> {
         Ok(())
     }
@@ -428,8 +404,8 @@ pub trait CorProfilerCallback2: CorProfilerCallback {
 }
 pub trait CorProfilerCallback3: CorProfilerCallback2 {
     fn initialize_for_attach(
-        p_cor_profiler_info_unk: IUnknown,
-        pv_client_data: VOID,
+        p_cor_profiler_info_unk: CorProfilerInfo,
+        pv_client_data: *const c_void,
         cb_client_data: UINT,
     ) -> Result<(), Error> {
         Ok(())
@@ -455,7 +431,7 @@ pub trait CorProfilerCallback4: CorProfilerCallback3 {
     fn get_rejit_parameters(
         module_id: ModuleID,
         method_id: mdMethodDef,
-        p_function_control: ICorProfilerFunctionControl,
+        p_function_control: CorProfilerFunctionControl,
     ) -> Result<(), Error> {
         Ok(())
     }
@@ -508,7 +484,7 @@ pub trait CorProfilerCallback5: CorProfilerCallback4 {
 pub trait CorProfilerCallback6: CorProfilerCallback5 {
     fn get_assembly_references(
         wsz_assembly_path: WCHAR,
-        p_asm_ref_provider: ICorProfilerAssemblyReferenceProvider,
+        p_asm_ref_provider: CorProfilerAssemblyReferenceProvider,
     ) -> Result<(), Error> {
         Ok(())
     }
