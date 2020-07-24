@@ -1,11 +1,17 @@
 #![allow(non_snake_case)]
-use crate::ffi::GUID;
-use std::marker::PhantomData;
+use crate::ffi::{CorProfilerInfo, GUID, HRESULT, UINT};
+use std::ffi::c_void;
 
 #[repr(C)]
 pub struct ICorProfilerCallback3<T> {
-    // TODO: fill in FFI interface functions here
-    phantom: PhantomData<T>,
+    pub InitializeForAttach: unsafe extern "system" fn(
+        this: &mut T,
+        pCorProfilerInfoUnk: *const CorProfilerInfo,
+        pvClientData: *const c_void,
+        cbClientData: UINT,
+    ) -> HRESULT,
+    pub ProfilerAttachComplete: unsafe extern "system" fn(this: &mut T) -> HRESULT,
+    pub ProfilerDetachSucceeded: unsafe extern "system" fn(this: &mut T) -> HRESULT,
 }
 
 impl ICorProfilerCallback3<()> {

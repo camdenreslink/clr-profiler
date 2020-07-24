@@ -1,11 +1,50 @@
 #![allow(non_snake_case)]
-use crate::ffi::GUID;
-use std::marker::PhantomData;
+use crate::ffi::{
+    mdMethodDef, CorProfilerFunctionControl, FunctionID, ModuleID, ObjectID, ReJITID, BOOL, GUID,
+    HRESULT, SIZE_T, ULONG,
+};
 
 #[repr(C)]
 pub struct ICorProfilerCallback4<T> {
-    // TODO: fill in FFI interface functions here
-    phantom: PhantomData<T>,
+    pub ReJITCompilationStarted: unsafe extern "system" fn(
+        this: &mut T,
+        functionId: FunctionID,
+        rejitId: ReJITID,
+        fIsSafeToBlock: BOOL,
+    ) -> HRESULT,
+    pub GetReJITParameters: unsafe extern "system" fn(
+        this: &mut T,
+        moduleId: ModuleID,
+        methodId: mdMethodDef,
+        pFunctionControl: *const CorProfilerFunctionControl,
+    ) -> HRESULT,
+    pub ReJITCompilationFinished: unsafe extern "system" fn(
+        this: &mut T,
+        functionId: FunctionID,
+        rejitId: ReJITID,
+        hrStatus: HRESULT,
+        fIsSafeToBlock: BOOL,
+    ) -> HRESULT,
+    pub ReJITError: unsafe extern "system" fn(
+        this: &mut T,
+        moduleId: ModuleID,
+        methodId: mdMethodDef,
+        functionId: FunctionID,
+        hrStatus: HRESULT,
+    ) -> HRESULT,
+    pub MovedReferences2: unsafe extern "system" fn(
+        this: &mut T,
+        cMovedObjectIDRanges: ULONG,
+        oldObjectIDRangeStart: *const ObjectID,
+        newObjectIDRangeStart: *const ObjectID,
+        cObjectIDRangeLength: *const SIZE_T,
+    ) -> HRESULT,
+    pub SurvivingReferences2: unsafe extern "system" fn(
+        this: &mut T,
+        cSurvivingObjectIDRanges: ULONG,
+        objectIDRangeStart: *const ObjectID,
+        cObjectIDRangeLength: *const SIZE_T,
+    ) -> HRESULT,
 }
 
 impl ICorProfilerCallback4<()> {

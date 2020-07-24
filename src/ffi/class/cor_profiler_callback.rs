@@ -1,13 +1,14 @@
 #![allow(non_snake_case)]
-use super::CorProfilerInfo;
+use super::{CorProfilerAssemblyReferenceProvider, CorProfilerFunctionControl, CorProfilerInfo};
 use crate::ffi::{
-    int, AppDomainID, AssemblyID, ClassID, FunctionID, GCHandleID, ICorProfilerCallback,
-    ICorProfilerCallback2, ICorProfilerCallback3, ICorProfilerCallback4, ICorProfilerCallback5,
-    ICorProfilerCallback6, ICorProfilerCallback7, ICorProfilerCallback8, ICorProfilerCallback9,
-    IUnknown, ModuleID, ObjectID, ThreadID, BOOL, COR_PRF_GC_REASON, COR_PRF_GC_ROOT_FLAGS,
-    COR_PRF_GC_ROOT_KIND, COR_PRF_JIT_CACHE, COR_PRF_MONITOR, COR_PRF_SUSPEND_REASON,
-    COR_PRF_TRANSITION_REASON, DWORD, E_FAIL, E_NOINTERFACE, GUID, HRESULT, LPVOID, REFGUID,
-    REFIID, S_OK, UINT_PTR, ULONG, WCHAR,
+    int, mdMethodDef, AppDomainID, AssemblyID, ClassID, FunctionID, GCHandleID,
+    ICorProfilerCallback, ICorProfilerCallback2, ICorProfilerCallback3, ICorProfilerCallback4,
+    ICorProfilerCallback5, ICorProfilerCallback6, ICorProfilerCallback7, ICorProfilerCallback8,
+    ICorProfilerCallback9, IUnknown, ModuleID, ObjectID, ReJITID, ThreadID, BOOL,
+    COR_PRF_GC_REASON, COR_PRF_GC_ROOT_FLAGS, COR_PRF_GC_ROOT_KIND, COR_PRF_JIT_CACHE,
+    COR_PRF_MONITOR, COR_PRF_SUSPEND_REASON, COR_PRF_TRANSITION_REASON, DWORD, E_FAIL,
+    E_NOINTERFACE, GUID, HRESULT, LPCBYTE, LPVOID, REFGUID, REFIID, SIZE_T, S_OK, UINT, UINT_PTR,
+    ULONG, WCHAR,
 };
 use std::{
     ffi::c_void,
@@ -20,13 +21,13 @@ pub struct CorProfilerCallbackVtbl<'a> {
     pub IUnknown: IUnknown<CorProfilerCallback<'a>>,
     pub ICorProfilerCallback: ICorProfilerCallback<CorProfilerCallback<'a>>,
     pub ICorProfilerCallback2: ICorProfilerCallback2<CorProfilerCallback<'a>>,
-    // pub ICorProfilerCallback3: ICorProfilerCallback3<CorProfilerCallback>,
-    // pub ICorProfilerCallback4: ICorProfilerCallback4<CorProfilerCallback>,
-    // pub ICorProfilerCallback5: ICorProfilerCallback5<CorProfilerCallback>,
-    // pub ICorProfilerCallback6: ICorProfilerCallback6<CorProfilerCallback>,
-    // pub ICorProfilerCallback7: ICorProfilerCallback7<CorProfilerCallback>,
-    // pub ICorProfilerCallback8: ICorProfilerCallback8<CorProfilerCallback>,
-    // pub ICorProfilerCallback9: ICorProfilerCallback9<CorProfilerCallback>
+    pub ICorProfilerCallback3: ICorProfilerCallback3<CorProfilerCallback<'a>>,
+    pub ICorProfilerCallback4: ICorProfilerCallback4<CorProfilerCallback<'a>>,
+    pub ICorProfilerCallback5: ICorProfilerCallback5<CorProfilerCallback<'a>>,
+    pub ICorProfilerCallback6: ICorProfilerCallback6<CorProfilerCallback<'a>>,
+    pub ICorProfilerCallback7: ICorProfilerCallback7<CorProfilerCallback<'a>>,
+    pub ICorProfilerCallback8: ICorProfilerCallback8<CorProfilerCallback<'a>>,
+    pub ICorProfilerCallback9: ICorProfilerCallback9<CorProfilerCallback<'a>>,
 }
 
 #[repr(C)]
@@ -126,6 +127,36 @@ impl<'a> CorProfilerCallback<'a> {
                     HandleCreated: Self::HandleCreated,
                     HandleDestroyed: Self::HandleDestroyed,
                 },
+                ICorProfilerCallback3: ICorProfilerCallback3 {
+                    InitializeForAttach: Self::InitializeForAttach,
+                    ProfilerAttachComplete: Self::ProfilerAttachComplete,
+                    ProfilerDetachSucceeded: Self::ProfilerDetachSucceeded,
+                },
+                ICorProfilerCallback4: ICorProfilerCallback4 {
+                    ReJITCompilationStarted: Self::ReJITCompilationStarted,
+                    GetReJITParameters: Self::GetReJITParameters,
+                    ReJITCompilationFinished: Self::ReJITCompilationFinished,
+                    ReJITError: Self::ReJITError,
+                    MovedReferences2: Self::MovedReferences2,
+                    SurvivingReferences2: Self::SurvivingReferences2,
+                },
+                ICorProfilerCallback5: ICorProfilerCallback5 {
+                    ConditionalWeakTableElementReferences:
+                        Self::ConditionalWeakTableElementReferences,
+                },
+                ICorProfilerCallback6: ICorProfilerCallback6 {
+                    GetAssemblyReferences: Self::GetAssemblyReferences,
+                },
+                ICorProfilerCallback7: ICorProfilerCallback7 {
+                    ModuleInMemorySymbolsUpdated: Self::ModuleInMemorySymbolsUpdated,
+                },
+                ICorProfilerCallback8: ICorProfilerCallback8 {
+                    DynamicMethodJITCompilationStarted: Self::DynamicMethodJITCompilationStarted,
+                    DynamicMethodJITCompilationFinished: Self::DynamicMethodJITCompilationFinished,
+                },
+                ICorProfilerCallback9: ICorProfilerCallback9 {
+                    DynamicMethodUnloaded: Self::DynamicMethodUnloaded,
+                },
             },
             ref_count: AtomicU32::new(1), // TODO: Why does ref_count have to start at 1? Isn't 0 more appropriate? Why is release called by profiling api without calling add_ref?
             cor_profiler_info: None,
@@ -161,12 +192,12 @@ impl<'a> CorProfilerCallback<'a> {
             || *riid == ICorProfilerCallback::IID
             || *riid == ICorProfilerCallback2::IID
             || *riid == ICorProfilerCallback3::IID
-        //|| *riid == ICorProfilerCallback4Com::IID
-        //|| *riid == ICorProfilerCallback5Com::IID
-        //|| *riid == ICorProfilerCallback6Com::IID
-        //|| *riid == ICorProfilerCallback7Com::IID
-        //|| *riid == ICorProfilerCallback8Com::IID
-        //|| *riid == ICorProfilerCallback9Com::IID
+            || *riid == ICorProfilerCallback4::IID
+            || *riid == ICorProfilerCallback5::IID
+            || *riid == ICorProfilerCallback6::IID
+            || *riid == ICorProfilerCallback7::IID
+            || *riid == ICorProfilerCallback8::IID
+            || *riid == ICorProfilerCallback9::IID
         {
             *ppvObject = self as *mut CorProfilerCallback as LPVOID;
             self.add_ref();
@@ -212,7 +243,7 @@ impl<'a> CorProfilerCallback<'a> {
 
 // ICorProfilerCallback
 impl<'a> CorProfilerCallback<'a> {
-    unsafe extern "system" fn Initialize(
+    pub unsafe extern "system" fn Initialize(
         &mut self,
         pICorProfilerInfoUnk: *const CorProfilerInfo,
     ) -> HRESULT {
@@ -226,18 +257,18 @@ impl<'a> CorProfilerCallback<'a> {
         self.cor_profiler_info().SetEventMask(event_mask);
         S_OK
     }
-    unsafe extern "system" fn Shutdown(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn Shutdown(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::Shutdown called!");
         S_OK
     }
-    unsafe extern "system" fn AppDomainCreationStarted(
+    pub unsafe extern "system" fn AppDomainCreationStarted(
         &mut self,
         appDomainId: AppDomainID,
     ) -> HRESULT {
         println!("ICorProfilerCallback::AppDomainCreationStarted called!");
         S_OK
     }
-    unsafe extern "system" fn AppDomainCreationFinished(
+    pub unsafe extern "system" fn AppDomainCreationFinished(
         &mut self,
         appDomainId: AppDomainID,
         hrStatus: HRESULT,
@@ -245,14 +276,14 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::AppDomainCreationFinished called!");
         S_OK
     }
-    unsafe extern "system" fn AppDomainShutdownStarted(
+    pub unsafe extern "system" fn AppDomainShutdownStarted(
         &mut self,
         appDomainId: AppDomainID,
     ) -> HRESULT {
         println!("ICorProfilerCallback::AppDomainShutdownStarted called!");
         S_OK
     }
-    unsafe extern "system" fn AppDomainShutdownFinished(
+    pub unsafe extern "system" fn AppDomainShutdownFinished(
         &mut self,
         appDomainId: AppDomainID,
         hrStatus: HRESULT,
@@ -260,11 +291,14 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::AppDomainShutdownFinished called!");
         S_OK
     }
-    unsafe extern "system" fn AssemblyLoadStarted(&mut self, assemblyId: AssemblyID) -> HRESULT {
+    pub unsafe extern "system" fn AssemblyLoadStarted(
+        &mut self,
+        assemblyId: AssemblyID,
+    ) -> HRESULT {
         println!("ICorProfilerCallback::AssemblyLoadStarted called!");
         S_OK
     }
-    unsafe extern "system" fn AssemblyLoadFinished(
+    pub unsafe extern "system" fn AssemblyLoadFinished(
         &mut self,
         assemblyId: AssemblyID,
         hrStatus: HRESULT,
@@ -272,11 +306,14 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::AssemblyLoadFinished called!");
         S_OK
     }
-    unsafe extern "system" fn AssemblyUnloadStarted(&mut self, assemblyId: AssemblyID) -> HRESULT {
+    pub unsafe extern "system" fn AssemblyUnloadStarted(
+        &mut self,
+        assemblyId: AssemblyID,
+    ) -> HRESULT {
         println!("ICorProfilerCallback::AssemblyUnloadStarted called!");
         S_OK
     }
-    unsafe extern "system" fn AssemblyUnloadFinished(
+    pub unsafe extern "system" fn AssemblyUnloadFinished(
         &mut self,
         assemblyId: AssemblyID,
         hrStatus: HRESULT,
@@ -284,11 +321,11 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::AssemblyUnloadFinished called!");
         S_OK
     }
-    unsafe extern "system" fn ModuleLoadStarted(&mut self, moduleId: ModuleID) -> HRESULT {
+    pub unsafe extern "system" fn ModuleLoadStarted(&mut self, moduleId: ModuleID) -> HRESULT {
         println!("ICorProfilerCallback::ModuleLoadStarted called!");
         S_OK
     }
-    unsafe extern "system" fn ModuleLoadFinished(
+    pub unsafe extern "system" fn ModuleLoadFinished(
         &mut self,
         moduleId: ModuleID,
         hrStatus: HRESULT,
@@ -296,11 +333,11 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ModuleLoadFinished called!");
         S_OK
     }
-    unsafe extern "system" fn ModuleUnloadStarted(&mut self, moduleId: ModuleID) -> HRESULT {
+    pub unsafe extern "system" fn ModuleUnloadStarted(&mut self, moduleId: ModuleID) -> HRESULT {
         println!("ICorProfilerCallback::ModuleUnloadStarted called!");
         S_OK
     }
-    unsafe extern "system" fn ModuleUnloadFinished(
+    pub unsafe extern "system" fn ModuleUnloadFinished(
         &mut self,
         moduleId: ModuleID,
         hrStatus: HRESULT,
@@ -308,7 +345,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ModuleUnloadFinished called!");
         S_OK
     }
-    unsafe extern "system" fn ModuleAttachedToAssembly(
+    pub unsafe extern "system" fn ModuleAttachedToAssembly(
         &mut self,
         moduleId: ModuleID,
         AssemblyId: AssemblyID,
@@ -316,11 +353,11 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ModuleAttachedToAssembly called!");
         S_OK
     }
-    unsafe extern "system" fn ClassLoadStarted(&mut self, classId: ClassID) -> HRESULT {
+    pub unsafe extern "system" fn ClassLoadStarted(&mut self, classId: ClassID) -> HRESULT {
         println!("ICorProfilerCallback::ClassLoadStarted called!");
         S_OK
     }
-    unsafe extern "system" fn ClassLoadFinished(
+    pub unsafe extern "system" fn ClassLoadFinished(
         &mut self,
         classId: ClassID,
         hrStatus: HRESULT,
@@ -328,11 +365,11 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ClassLoadFinished called!");
         S_OK
     }
-    unsafe extern "system" fn ClassUnloadStarted(&mut self, classId: ClassID) -> HRESULT {
+    pub unsafe extern "system" fn ClassUnloadStarted(&mut self, classId: ClassID) -> HRESULT {
         println!("ICorProfilerCallback::ClassUnloadStarted called!");
         S_OK
     }
-    unsafe extern "system" fn ClassUnloadFinished(
+    pub unsafe extern "system" fn ClassUnloadFinished(
         &mut self,
         classId: ClassID,
         hrStatus: HRESULT,
@@ -340,11 +377,14 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ClassUnloadFinished called!");
         S_OK
     }
-    unsafe extern "system" fn FunctionUnloadStarted(&mut self, functionId: FunctionID) -> HRESULT {
+    pub unsafe extern "system" fn FunctionUnloadStarted(
+        &mut self,
+        functionId: FunctionID,
+    ) -> HRESULT {
         println!("ICorProfilerCallback::FunctionUnloadStarted called!");
         S_OK
     }
-    unsafe extern "system" fn JITCompilationStarted(
+    pub unsafe extern "system" fn JITCompilationStarted(
         &mut self,
         functionId: FunctionID,
         fIsSafeToBlock: BOOL,
@@ -352,7 +392,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::JITCompilationStarted called!");
         S_OK
     }
-    unsafe extern "system" fn JITCompilationFinished(
+    pub unsafe extern "system" fn JITCompilationFinished(
         &mut self,
         functionId: FunctionID,
         hrStatus: HRESULT,
@@ -361,7 +401,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::JITCompilationFinished called!");
         S_OK
     }
-    unsafe extern "system" fn JITCachedFunctionSearchStarted(
+    pub unsafe extern "system" fn JITCachedFunctionSearchStarted(
         &mut self,
         functionId: FunctionID,
         pbUseCachedFunction: *mut BOOL,
@@ -369,7 +409,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::JITCachedFunctionSearchStarted called!");
         S_OK
     }
-    unsafe extern "system" fn JITCachedFunctionSearchFinished(
+    pub unsafe extern "system" fn JITCachedFunctionSearchFinished(
         &mut self,
         functionId: FunctionID,
         result: COR_PRF_JIT_CACHE,
@@ -377,11 +417,11 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::JITCachedFunctionSearchFinished called!");
         S_OK
     }
-    unsafe extern "system" fn JITFunctionPitched(&mut self, functionId: FunctionID) -> HRESULT {
+    pub unsafe extern "system" fn JITFunctionPitched(&mut self, functionId: FunctionID) -> HRESULT {
         println!("ICorProfilerCallback::JITFunctionPitched called!");
         S_OK
     }
-    unsafe extern "system" fn JITInlining(
+    pub unsafe extern "system" fn JITInlining(
         &mut self,
         callerId: FunctionID,
         calleeId: FunctionID,
@@ -390,15 +430,15 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::JITInlining called!");
         S_OK
     }
-    unsafe extern "system" fn ThreadCreated(&mut self, threadId: ThreadID) -> HRESULT {
+    pub unsafe extern "system" fn ThreadCreated(&mut self, threadId: ThreadID) -> HRESULT {
         println!("ICorProfilerCallback::ThreadCreated called!");
         S_OK
     }
-    unsafe extern "system" fn ThreadDestroyed(&mut self, threadId: ThreadID) -> HRESULT {
+    pub unsafe extern "system" fn ThreadDestroyed(&mut self, threadId: ThreadID) -> HRESULT {
         println!("ICorProfilerCallback::ThreadDestroyed called!");
         S_OK
     }
-    unsafe extern "system" fn ThreadAssignedToOSThread(
+    pub unsafe extern "system" fn ThreadAssignedToOSThread(
         &mut self,
         managedThreadId: ThreadID,
         osThreadId: DWORD,
@@ -406,11 +446,11 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ThreadAssignedToOSThread called!");
         S_OK
     }
-    unsafe extern "system" fn RemotingClientInvocationStarted(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn RemotingClientInvocationStarted(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::RemotingClientInvocationStarted called!");
         S_OK
     }
-    unsafe extern "system" fn RemotingClientSendingMessage(
+    pub unsafe extern "system" fn RemotingClientSendingMessage(
         &mut self,
         pCookie: *const GUID,
         fIsAsync: BOOL,
@@ -418,7 +458,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::RemotingClientSendingMessage called!");
         S_OK
     }
-    unsafe extern "system" fn RemotingClientReceivingReply(
+    pub unsafe extern "system" fn RemotingClientReceivingReply(
         &mut self,
         pCookie: *const GUID,
         fIsAsync: BOOL,
@@ -426,11 +466,11 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::RemotingClientReceivingReply called!");
         S_OK
     }
-    unsafe extern "system" fn RemotingClientInvocationFinished(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn RemotingClientInvocationFinished(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::RemotingClientInvocationFinished called!");
         S_OK
     }
-    unsafe extern "system" fn RemotingServerReceivingMessage(
+    pub unsafe extern "system" fn RemotingServerReceivingMessage(
         &mut self,
         pCookie: *const GUID,
         fIsAsync: BOOL,
@@ -438,15 +478,15 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::RemotingServerReceivingMessage called!");
         S_OK
     }
-    unsafe extern "system" fn RemotingServerInvocationStarted(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn RemotingServerInvocationStarted(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::RemotingServerInvocationStarted called!");
         S_OK
     }
-    unsafe extern "system" fn RemotingServerInvocationReturned(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn RemotingServerInvocationReturned(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::RemotingServerInvocationReturned called!");
         S_OK
     }
-    unsafe extern "system" fn RemotingServerSendingReply(
+    pub unsafe extern "system" fn RemotingServerSendingReply(
         &mut self,
         pCookie: *const GUID,
         fIsAsync: BOOL,
@@ -454,7 +494,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::RemotingServerSendingReply called!");
         S_OK
     }
-    unsafe extern "system" fn UnmanagedToManagedTransition(
+    pub unsafe extern "system" fn UnmanagedToManagedTransition(
         &mut self,
         functionId: FunctionID,
         reason: COR_PRF_TRANSITION_REASON,
@@ -462,7 +502,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::UnmanagedToManagedTransition called!");
         S_OK
     }
-    unsafe extern "system" fn ManagedToUnmanagedTransition(
+    pub unsafe extern "system" fn ManagedToUnmanagedTransition(
         &mut self,
         functionId: FunctionID,
         reason: COR_PRF_TRANSITION_REASON,
@@ -470,38 +510,38 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ManagedToUnmanagedTransition called!");
         S_OK
     }
-    unsafe extern "system" fn RuntimeSuspendStarted(
+    pub unsafe extern "system" fn RuntimeSuspendStarted(
         &mut self,
         suspendReason: COR_PRF_SUSPEND_REASON,
     ) -> HRESULT {
         println!("ICorProfilerCallback::RuntimeSuspendStarted called!");
         S_OK
     }
-    unsafe extern "system" fn RuntimeSuspendFinished(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn RuntimeSuspendFinished(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::RuntimeSuspendFinished called!");
         S_OK
     }
-    unsafe extern "system" fn RuntimeSuspendAborted(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn RuntimeSuspendAborted(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::RuntimeSuspendAborted called!");
         S_OK
     }
-    unsafe extern "system" fn RuntimeResumeStarted(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn RuntimeResumeStarted(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::RuntimeResumeStarted called!");
         S_OK
     }
-    unsafe extern "system" fn RuntimeResumeFinished(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn RuntimeResumeFinished(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::RuntimeResumeFinished called!");
         S_OK
     }
-    unsafe extern "system" fn RuntimeThreadSuspended(&mut self, threadId: ThreadID) -> HRESULT {
+    pub unsafe extern "system" fn RuntimeThreadSuspended(&mut self, threadId: ThreadID) -> HRESULT {
         println!("ICorProfilerCallback::RuntimeThreadSuspended called!");
         S_OK
     }
-    unsafe extern "system" fn RuntimeThreadResumed(&mut self, threadId: ThreadID) -> HRESULT {
+    pub unsafe extern "system" fn RuntimeThreadResumed(&mut self, threadId: ThreadID) -> HRESULT {
         println!("ICorProfilerCallback::RuntimeThreadResumed called!");
         S_OK
     }
-    unsafe extern "system" fn MovedReferences(
+    pub unsafe extern "system" fn MovedReferences(
         &mut self,
         cMovedObjectIDRanges: ULONG,
         oldObjectIDRangeStart: *const ObjectID,
@@ -511,7 +551,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::MovedReferences called!");
         S_OK
     }
-    unsafe extern "system" fn ObjectAllocated(
+    pub unsafe extern "system" fn ObjectAllocated(
         &mut self,
         objectId: ObjectID,
         classId: ClassID,
@@ -519,7 +559,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ObjectAllocated called!");
         S_OK
     }
-    unsafe extern "system" fn ObjectsAllocatedByClass(
+    pub unsafe extern "system" fn ObjectsAllocatedByClass(
         &mut self,
         cClassCount: ULONG,
         classIds: *const ClassID,
@@ -528,7 +568,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ObjectsAllocatedByClass called!");
         S_OK
     }
-    unsafe extern "system" fn ObjectReferences(
+    pub unsafe extern "system" fn ObjectReferences(
         &mut self,
         objectId: ObjectID,
         classId: ClassID,
@@ -538,7 +578,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ObjectReferences called!");
         S_OK
     }
-    unsafe extern "system" fn RootReferences(
+    pub unsafe extern "system" fn RootReferences(
         &mut self,
         cRootRefs: ULONG,
         rootRefIds: *const ObjectID,
@@ -546,70 +586,76 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::RootReferences called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionThrown(&mut self, thrownObjectId: ObjectID) -> HRESULT {
+    pub unsafe extern "system" fn ExceptionThrown(&mut self, thrownObjectId: ObjectID) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionThrown called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionSearchFunctionEnter(
+    pub unsafe extern "system" fn ExceptionSearchFunctionEnter(
         &mut self,
         functionId: FunctionID,
     ) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionSearchFunctionEnter called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionSearchFunctionLeave(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn ExceptionSearchFunctionLeave(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionSearchFunctionLeave called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionSearchFilterEnter(
+    pub unsafe extern "system" fn ExceptionSearchFilterEnter(
         &mut self,
         functionId: FunctionID,
     ) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionSearchFilterEnter called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionSearchFilterLeave(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn ExceptionSearchFilterLeave(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionSearchFilterLeave called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionSearchCatcherFound(
+    pub unsafe extern "system" fn ExceptionSearchCatcherFound(
         &mut self,
         functionId: FunctionID,
     ) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionSearchCatcherFound called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionOSHandlerEnter(&mut self, __unused: UINT_PTR) -> HRESULT {
+    pub unsafe extern "system" fn ExceptionOSHandlerEnter(
+        &mut self,
+        __unused: UINT_PTR,
+    ) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionOSHandlerEnter called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionOSHandlerLeave(&mut self, __unused: UINT_PTR) -> HRESULT {
+    pub unsafe extern "system" fn ExceptionOSHandlerLeave(
+        &mut self,
+        __unused: UINT_PTR,
+    ) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionOSHandlerLeave called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionUnwindFunctionEnter(
+    pub unsafe extern "system" fn ExceptionUnwindFunctionEnter(
         &mut self,
         functionId: FunctionID,
     ) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionUnwindFunctionEnter called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionUnwindFunctionLeave(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn ExceptionUnwindFunctionLeave(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionUnwindFunctionLeave called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionUnwindFinallyEnter(
+    pub unsafe extern "system" fn ExceptionUnwindFinallyEnter(
         &mut self,
         functionId: FunctionID,
     ) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionUnwindFinallyEnter called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionUnwindFinallyLeave(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn ExceptionUnwindFinallyLeave(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionUnwindFinallyLeave called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionCatcherEnter(
+    pub unsafe extern "system" fn ExceptionCatcherEnter(
         &mut self,
         functionId: FunctionID,
         objectId: ObjectID,
@@ -617,11 +663,11 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::ExceptionCatcherEnter called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionCatcherLeave(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn ExceptionCatcherLeave(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionCatcherLeave called!");
         S_OK
     }
-    unsafe extern "system" fn COMClassicVTableCreated(
+    pub unsafe extern "system" fn COMClassicVTableCreated(
         &mut self,
         wrappedClassId: ClassID,
         implementedIID: REFGUID,
@@ -631,7 +677,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::COMClassicVTableCreated called!");
         S_OK
     }
-    unsafe extern "system" fn COMClassicVTableDestroyed(
+    pub unsafe extern "system" fn COMClassicVTableDestroyed(
         &mut self,
         wrappedClassId: ClassID,
         implementedIID: REFGUID,
@@ -640,11 +686,11 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback::COMClassicVTableDestroyed called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionCLRCatcherFound(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn ExceptionCLRCatcherFound(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionCLRCatcherFound called!");
         S_OK
     }
-    unsafe extern "system" fn ExceptionCLRCatcherExecute(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn ExceptionCLRCatcherExecute(&mut self) -> HRESULT {
         println!("ICorProfilerCallback::ExceptionCLRCatcherExecute called!");
         S_OK
     }
@@ -652,7 +698,7 @@ impl<'a> CorProfilerCallback<'a> {
 
 // ICorProfilerCallback2
 impl<'a> CorProfilerCallback<'a> {
-    unsafe extern "system" fn ThreadNameChanged(
+    pub unsafe extern "system" fn ThreadNameChanged(
         &mut self,
         threadId: ThreadID,
         cchName: ULONG,
@@ -661,7 +707,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback2::ThreadNameChanged called!");
         S_OK
     }
-    unsafe extern "system" fn GarbageCollectionStarted(
+    pub unsafe extern "system" fn GarbageCollectionStarted(
         &mut self,
         cGenerations: int,
         generationCollected: *const BOOL,
@@ -670,7 +716,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback2::GarbageCollectionStarted called!");
         S_OK
     }
-    unsafe extern "system" fn SurvivingReferences(
+    pub unsafe extern "system" fn SurvivingReferences(
         &mut self,
         cSurvivingObjectIDRanges: ULONG,
         objectIDRangeStart: *const ObjectID,
@@ -679,11 +725,11 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback2::SurvivingReferences called!");
         S_OK
     }
-    unsafe extern "system" fn GarbageCollectionFinished(&mut self) -> HRESULT {
+    pub unsafe extern "system" fn GarbageCollectionFinished(&mut self) -> HRESULT {
         println!("ICorProfilerCallback2::GarbageCollectionFinished called!");
         S_OK
     }
-    unsafe extern "system" fn FinalizeableObjectQueued(
+    pub unsafe extern "system" fn FinalizeableObjectQueued(
         &mut self,
         finalizerFlags: DWORD,
         objectID: ObjectID,
@@ -691,7 +737,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback2::FinalizeableObjectQueued called!");
         S_OK
     }
-    unsafe extern "system" fn RootReferences2(
+    pub unsafe extern "system" fn RootReferences2(
         &mut self,
         cRootRefs: ULONG,
         rootRefIds: *const ObjectID,
@@ -702,7 +748,7 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback2::RootReferences2 called!");
         S_OK
     }
-    unsafe extern "system" fn HandleCreated(
+    pub unsafe extern "system" fn HandleCreated(
         &mut self,
         handleId: GCHandleID,
         initialObjectId: ObjectID,
@@ -710,8 +756,133 @@ impl<'a> CorProfilerCallback<'a> {
         println!("ICorProfilerCallback2::HandleCreated called!");
         S_OK
     }
-    unsafe extern "system" fn HandleDestroyed(&mut self, handleId: GCHandleID) -> HRESULT {
+    pub unsafe extern "system" fn HandleDestroyed(&mut self, handleId: GCHandleID) -> HRESULT {
         println!("ICorProfilerCallback2::HandleDestroyed called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn InitializeForAttach(
+        &mut self,
+        pCorProfilerInfoUnk: *const CorProfilerInfo,
+        pvClientData: *const c_void,
+        cbClientData: UINT,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback3::InitializeForAttach called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn ProfilerAttachComplete(&mut self) -> HRESULT {
+        println!("ICorProfilerCallback3::ProfilerAttachComplete called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn ProfilerDetachSucceeded(&mut self) -> HRESULT {
+        println!("ICorProfilerCallback3::ProfilerDetachSucceeded called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn ReJITCompilationStarted(
+        &mut self,
+        functionId: FunctionID,
+        rejitId: ReJITID,
+        fIsSafeToBlock: BOOL,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback4::ReJITCompilationStarted called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn GetReJITParameters(
+        &mut self,
+        moduleId: ModuleID,
+        methodId: mdMethodDef,
+        pFunctionControl: *const CorProfilerFunctionControl,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback4::GetReJITParameters called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn ReJITCompilationFinished(
+        &mut self,
+        functionId: FunctionID,
+        rejitId: ReJITID,
+        hrStatus: HRESULT,
+        fIsSafeToBlock: BOOL,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback4::ReJITCompilationFinished called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn ReJITError(
+        &mut self,
+        moduleId: ModuleID,
+        methodId: mdMethodDef,
+        functionId: FunctionID,
+        hrStatus: HRESULT,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback4::ReJITError called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn MovedReferences2(
+        &mut self,
+        cMovedObjectIDRanges: ULONG,
+        oldObjectIDRangeStart: *const ObjectID,
+        newObjectIDRangeStart: *const ObjectID,
+        cObjectIDRangeLength: *const SIZE_T,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback4::MovedReferences2 called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn SurvivingReferences2(
+        &mut self,
+        cSurvivingObjectIDRanges: ULONG,
+        objectIDRangeStart: *const ObjectID,
+        cObjectIDRangeLength: *const SIZE_T,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback4::SurvivingReferences2 called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn ConditionalWeakTableElementReferences(
+        &mut self,
+        cRootRefs: ULONG,
+        keyRefIds: *const ObjectID,
+        valueRefIds: *const ObjectID,
+        rootIds: *const GCHandleID,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback5::ConditionalWeakTableElementReferences called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn GetAssemblyReferences(
+        &mut self,
+        wszAssemblyPath: *const WCHAR,
+        pAsmRefProvider: *const CorProfilerAssemblyReferenceProvider,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback6::GetAssemblyReferences called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn ModuleInMemorySymbolsUpdated(
+        &mut self,
+        moduleId: ModuleID,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback7::ModuleInMemorySymbolsUpdated called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn DynamicMethodJITCompilationStarted(
+        &mut self,
+        functionId: FunctionID,
+        fIsSafeToBlock: BOOL,
+        pILHeader: LPCBYTE,
+        cbILHeader: ULONG,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback8::DynamicMethodJITCompilationStarted called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn DynamicMethodJITCompilationFinished(
+        &mut self,
+        functionId: FunctionID,
+        hrStatus: HRESULT,
+        fIsSafeToBlock: BOOL,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback8::DynamicMethodJITCompilationFinished called!");
+        S_OK
+    }
+    pub unsafe extern "system" fn DynamicMethodUnloaded(
+        &mut self,
+        functionId: FunctionID,
+    ) -> HRESULT {
+        println!("ICorProfilerCallback9::DynamicMethodUnloaded called!");
         S_OK
     }
 }

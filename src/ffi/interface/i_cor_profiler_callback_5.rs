@@ -1,11 +1,15 @@
 #![allow(non_snake_case)]
-use crate::ffi::GUID;
-use std::marker::PhantomData;
+use crate::ffi::{GCHandleID, ObjectID, GUID, HRESULT, ULONG};
 
 #[repr(C)]
 pub struct ICorProfilerCallback5<T> {
-    // TODO: fill in FFI interface functions here
-    phantom: PhantomData<T>,
+    pub ConditionalWeakTableElementReferences: unsafe extern "system" fn(
+        this: &mut T,
+        cRootRefs: ULONG,
+        keyRefIds: *const ObjectID,
+        valueRefIds: *const ObjectID,
+        rootIds: *const GCHandleID,
+    ) -> HRESULT,
 }
 
 impl ICorProfilerCallback5<()> {

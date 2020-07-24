@@ -1,11 +1,13 @@
 #![allow(non_snake_case)]
-use crate::ffi::GUID;
-use std::marker::PhantomData;
+use crate::ffi::{CorProfilerAssemblyReferenceProvider, GUID, HRESULT, WCHAR};
 
 #[repr(C)]
 pub struct ICorProfilerCallback6<T> {
-    // TODO: fill in FFI interface functions here
-    phantom: PhantomData<T>,
+    pub GetAssemblyReferences: unsafe extern "system" fn(
+        this: &mut T,
+        wszAssemblyPath: *const WCHAR,
+        pAsmRefProvider: *const CorProfilerAssemblyReferenceProvider,
+    ) -> HRESULT,
 }
 
 impl ICorProfilerCallback6<()> {

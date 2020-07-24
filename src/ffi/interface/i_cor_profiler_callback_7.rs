@@ -1,11 +1,10 @@
 #![allow(non_snake_case)]
-use crate::ffi::GUID;
-use std::marker::PhantomData;
+use crate::ffi::{ModuleID, GUID, HRESULT};
 
 #[repr(C)]
 pub struct ICorProfilerCallback7<T> {
-    // TODO: fill in FFI interface functions here
-    phantom: PhantomData<T>,
+    pub ModuleInMemorySymbolsUpdated:
+        unsafe extern "system" fn(this: &mut T, moduleId: ModuleID) -> HRESULT,
 }
 
 impl ICorProfilerCallback7<()> {

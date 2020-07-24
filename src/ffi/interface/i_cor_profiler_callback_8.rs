@@ -1,11 +1,21 @@
 #![allow(non_snake_case)]
-use crate::ffi::GUID;
-use std::marker::PhantomData;
+use crate::ffi::{FunctionID, BOOL, GUID, HRESULT, LPCBYTE, ULONG};
 
 #[repr(C)]
 pub struct ICorProfilerCallback8<T> {
-    // TODO: fill in FFI interface functions here
-    phantom: PhantomData<T>,
+    pub DynamicMethodJITCompilationStarted: unsafe extern "system" fn(
+        this: &mut T,
+        functionId: FunctionID,
+        fIsSafeToBlock: BOOL,
+        pILHeader: LPCBYTE,
+        cbILHeader: ULONG,
+    ) -> HRESULT,
+    pub DynamicMethodJITCompilationFinished: unsafe extern "system" fn(
+        this: &mut T,
+        functionId: FunctionID,
+        hrStatus: HRESULT,
+        fIsSafeToBlock: BOOL,
+    ) -> HRESULT,
 }
 
 impl ICorProfilerCallback8<()> {
