@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 use crate::ffi::{
-    CorProfilerCallback, IClassFactoryCom, IUnknown, BOOL, E_NOINTERFACE, HRESULT, LPVOID, REFIID,
+    CorProfilerCallback, IClassFactory, IUnknown, BOOL, E_NOINTERFACE, HRESULT, LPVOID, REFIID,
     S_OK, ULONG,
 };
 use std::ffi::c_void;
@@ -10,7 +10,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 #[repr(C)]
 pub struct ClassFactoryVtbl {
     pub IUnknown: IUnknown<ClassFactory>,
-    pub IClassFactory: IClassFactoryCom<ClassFactory>,
+    pub IClassFactory: IClassFactory<ClassFactory>,
 }
 
 #[repr(C)]
@@ -28,7 +28,7 @@ impl ClassFactory {
                     AddRef: Self::add_ref,
                     Release: Self::release,
                 },
-                IClassFactory: IClassFactoryCom {
+                IClassFactory: IClassFactory {
                     CreateInstance: Self::create_instance,
                     LockServer: Self::lock_server,
                 },
@@ -44,7 +44,7 @@ impl ClassFactory {
         ppvObject: *mut *mut c_void,
     ) -> HRESULT {
         println!("Class Factory hit query_interface!");
-        if *riid == IUnknown::IID || *riid == IClassFactoryCom::IID {
+        if *riid == IUnknown::IID || *riid == IClassFactory::IID {
             *ppvObject = self as *mut ClassFactory as LPVOID;
             self.add_ref();
             S_OK

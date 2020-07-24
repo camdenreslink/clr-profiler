@@ -1,9 +1,15 @@
 #![allow(non_snake_case)]
-use crate::ffi::GUID;
+use crate::ffi::{DWORD, GUID, HRESULT};
 
 #[repr(C)]
 pub struct ICorProfilerInfo5<T> {
-    // TODO: fill in FFI interface functions here
+    pub GetEventMask2: unsafe extern "system" fn(
+        this: &T,
+        pdwEventsLow: *mut DWORD,
+        pdwEventsHigh: *mut DWORD,
+    ) -> HRESULT,
+    pub SetEventMask2:
+        unsafe extern "system" fn(this: &T, dwEventsLow: DWORD, dwEventsHigh: DWORD) -> HRESULT,
 }
 
 impl ICorProfilerInfo5<()> {

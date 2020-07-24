@@ -6,8 +6,8 @@ use crate::ffi::{
     ICorProfilerCallback6, ICorProfilerCallback7, ICorProfilerCallback8, ICorProfilerCallback9,
     IUnknown, ModuleID, ObjectID, ThreadID, BOOL, COR_PRF_GC_REASON, COR_PRF_GC_ROOT_FLAGS,
     COR_PRF_GC_ROOT_KIND, COR_PRF_JIT_CACHE, COR_PRF_MONITOR, COR_PRF_SUSPEND_REASON,
-    COR_PRF_TRANSITION_REASON, DWORD, E_NOINTERFACE, GUID, HRESULT, LPVOID, REFGUID, REFIID, S_OK,
-    UINT_PTR, ULONG, WCHAR,
+    COR_PRF_TRANSITION_REASON, DWORD, E_FAIL, E_NOINTERFACE, GUID, HRESULT, LPVOID, REFGUID,
+    REFIID, S_OK, UINT_PTR, ULONG, WCHAR,
 };
 use std::{
     ffi::c_void,
@@ -133,6 +133,10 @@ impl<'a> CorProfilerCallback<'a> {
         Box::leak(Box::new(profiler))
     }
 
+    pub fn cor_profiler_info(&self) -> &'a CorProfilerInfo {
+        self.cor_profiler_info.unwrap()
+    }
+
     // DF63A541-5A33-4611-8829-F4E495985EE3
     pub const CLSID: GUID = GUID {
         data1: 0xDF63A541,
@@ -214,15 +218,12 @@ impl<'a> CorProfilerCallback<'a> {
     ) -> HRESULT {
         println!("ICorProfilerCallback::Initialize called!");
         self.cor_profiler_info = pICorProfilerInfoUnk.as_ref();
-        let event_mask: DWORD = COR_PRF_MONITOR::COR_PRF_ALL as DWORD;
-        if let Some(cor_profiler_info) = self.cor_profiler_info {
-            (cor_profiler_info
-                .lpVtbl
-                .as_ref()
-                .unwrap()
-                .ICorProfilerInfo
-                .SetEventMask)(cor_profiler_info, event_mask);
+        if self.cor_profiler_info.is_none() {
+            // TODO: Add logging indicating pICorProfilerInfoUnk was a null pointer
+            return E_FAIL;
         }
+        let event_mask: DWORD = COR_PRF_MONITOR::COR_PRF_ALL as DWORD;
+        self.cor_profiler_info().SetEventMask(event_mask);
         S_OK
     }
     unsafe extern "system" fn Shutdown(&mut self) -> HRESULT {

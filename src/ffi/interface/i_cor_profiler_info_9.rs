@@ -1,9 +1,33 @@
 #![allow(non_snake_case)]
-use crate::ffi::GUID;
+use crate::ffi::{
+    FunctionID, ReJITID, COR_DEBUG_IL_TO_NATIVE_MAP, COR_PRF_CODE_INFO, GUID, HRESULT, UINT_PTR,
+    ULONG32,
+};
 
 #[repr(C)]
 pub struct ICorProfilerInfo9<T> {
-    // TODO: fill in FFI interface functions here
+    pub GetNativeCodeStartAddresses: unsafe extern "system" fn(
+        this: &T,
+        functionID: FunctionID,
+        reJitId: ReJITID,
+        cCodeStartAddresses: ULONG32,
+        pcCodeStartAddresses: *mut ULONG32,
+        codeStartAddresses: *mut UINT_PTR,
+    ) -> HRESULT,
+    pub GetILToNativeMapping3: unsafe extern "system" fn(
+        this: &T,
+        pNativeCodeStartAddress: UINT_PTR,
+        cMap: ULONG32,
+        pcMap: *mut ULONG32,
+        map: *mut COR_DEBUG_IL_TO_NATIVE_MAP,
+    ) -> HRESULT,
+    pub GetCodeInfo4: unsafe extern "system" fn(
+        this: &T,
+        pNativeCodeStartAddress: UINT_PTR,
+        cCodeInfos: ULONG32,
+        pcCodeInfos: *mut ULONG32,
+        codeInfos: *mut COR_PRF_CODE_INFO,
+    ) -> HRESULT,
 }
 
 impl ICorProfilerInfo9<()> {

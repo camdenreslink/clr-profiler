@@ -5,7 +5,6 @@ use crate::ffi::{
     ModuleID, ObjectID, ProcessID, ThreadID, Unknown, BOOL, COR_DEBUG_IL_TO_NATIVE_MAP, COR_IL_MAP,
     DWORD, GUID, HANDLE, HRESULT, LPCBYTE, REFIID, ULONG, ULONG32, WCHAR,
 };
-use std::ffi::c_void;
 
 #[repr(C)]
 pub struct ICorProfilerInfo<T> {

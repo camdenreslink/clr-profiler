@@ -3,7 +3,7 @@ use crate::ffi::{IUnknown, BOOL, GUID, HRESULT, REFIID};
 use std::ffi::c_void;
 
 #[repr(C)]
-pub struct IClassFactoryCom<T> {
+pub struct IClassFactory<T> {
     pub CreateInstance: unsafe extern "system" fn(
         this: &mut T,
         pUnkOuter: *mut IUnknown<()>,
@@ -13,7 +13,7 @@ pub struct IClassFactoryCom<T> {
     pub LockServer: unsafe extern "system" fn(this: &mut T, fLock: BOOL) -> HRESULT,
 }
 
-impl IClassFactoryCom<()> {
+impl IClassFactory<()> {
     // 00000001-0000-0000-C000-000000000046
     pub const IID: GUID = GUID {
         data1: 0x00000001,
@@ -22,5 +22,3 @@ impl IClassFactoryCom<()> {
         data4: [0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46],
     };
 }
-
-pub trait IClassFactory {}

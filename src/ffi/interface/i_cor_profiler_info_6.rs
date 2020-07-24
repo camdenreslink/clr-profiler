@@ -1,9 +1,16 @@
 #![allow(non_snake_case)]
-use crate::ffi::GUID;
+use crate::ffi::{mdMethodDef, CorProfilerMethodEnum, ModuleID, BOOL, GUID, HRESULT};
 
 #[repr(C)]
 pub struct ICorProfilerInfo6<T> {
-    // TODO: fill in FFI interface functions here
+    pub EnumNgenModuleMethodsInliningThisMethod: unsafe extern "system" fn(
+        this: &T,
+        inlinersModuleId: ModuleID,
+        inlineeModuleId: ModuleID,
+        inlineeMethodId: mdMethodDef,
+        incompleteData: *mut BOOL,
+        ppEnum: *mut *mut CorProfilerMethodEnum,
+    ) -> HRESULT,
 }
 
 impl ICorProfilerInfo6<()> {

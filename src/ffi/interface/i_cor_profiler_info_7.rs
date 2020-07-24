@@ -1,9 +1,22 @@
 #![allow(non_snake_case)]
-use crate::ffi::GUID;
+use crate::ffi::{ModuleID, BYTE, DWORD, GUID, HRESULT};
 
 #[repr(C)]
 pub struct ICorProfilerInfo7<T> {
-    // TODO: fill in FFI interface functions here
+    pub ApplyMetaData: unsafe extern "system" fn(this: &T, moduleId: ModuleID) -> HRESULT,
+    pub GetInMemorySymbolsLength: unsafe extern "system" fn(
+        this: &T,
+        moduleId: ModuleID,
+        pCountSymbolBytes: *mut DWORD,
+    ) -> HRESULT,
+    pub ReadInMemorySymbols: unsafe extern "system" fn(
+        this: &T,
+        moduleId: ModuleID,
+        symbolsReadOffset: DWORD,
+        pSymbolBytes: *mut BYTE,
+        countSymbolBytes: DWORD,
+        pCountSymbolBytesRead: *mut DWORD,
+    ) -> HRESULT,
 }
 
 impl ICorProfilerInfo7<()> {

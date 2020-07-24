@@ -69,6 +69,8 @@ pub type ProcessID = UINT_PTR;
 pub type ContextID = UINT_PTR;
 pub type COR_PRF_FRAME_INFO = UINT_PTR;
 pub type COR_PRF_ELT_INFO = UINT_PTR;
+pub type COR_SIGNATURE = BYTE;
+pub type PCCOR_SIGNATURE = *const COR_SIGNATURE;
 #[repr(C)]
 pub union FunctionIDOrClientID {
     functionID: FunctionID,
@@ -139,6 +141,11 @@ pub type StackSnapshotCallback = unsafe extern "system" fn(
     context: *const BYTE,
     clientData: *const c_void,
 ) -> HRESULT;
+pub type ObjectReferenceCallback = unsafe extern "system" fn(
+    root: ObjectID,
+    reference: *const ObjectID,
+    clientData: *const c_void,
+) -> BOOL;
 
 // profiler types
 #[repr(C)]
@@ -366,7 +373,7 @@ pub struct COR_PRF_FUNCTION {
 }
 #[repr(C)]
 #[derive(Debug, PartialEq)]
-enum COR_PRF_MONITOR {
+pub enum COR_PRF_MONITOR {
     COR_PRF_MONITOR_NONE = 0,
     COR_PRF_MONITOR_FUNCTION_UNLOADS = 0x1,
     COR_PRF_MONITOR_CLASS_LOADS = 0x2,
@@ -437,7 +444,7 @@ enum COR_PRF_MONITOR {
 
 #[repr(C)]
 #[derive(Debug, PartialEq)]
-enum COR_PRF_HIGH_MONITOR {
+pub enum COR_PRF_HIGH_MONITOR {
     COR_PRF_HIGH_MONITOR_NONE = 0,
     COR_PRF_HIGH_ADD_ASSEMBLY_REFERENCES = 0x1,
     COR_PRF_HIGH_IN_MEMORY_SYMBOLS_UPDATED = 0x2,
@@ -456,4 +463,10 @@ enum COR_PRF_HIGH_MONITOR {
             | COR_PRF_HIGH_MONITOR::COR_PRF_HIGH_MONITOR_LARGEOBJECT_ALLOCATED as isize,
     // TODO: Duplicate discriminate values aren't allowed in rust c-like enums
     // COR_PRF_HIGH_MONITOR_IMMUTABLE = COR_PRF_HIGH_MONITOR::COR_PRF_HIGH_DISABLE_TIERED_COMPILATION as isize,
+}
+#[repr(C)]
+#[derive(Debug, PartialEq)]
+pub struct COR_PRF_METHOD {
+    moduleId: ModuleID,
+    methodId: mdMethodDef,
 }
