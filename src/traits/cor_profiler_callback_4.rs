@@ -21,7 +21,7 @@ pub trait CorProfilerCallback4: CorProfilerCallback3 {
         &mut self,
         module_id: ModuleID,
         method_id: mdMethodDef,
-        p_function_control: CorProfilerFunctionControl,
+        p_function_control: &CorProfilerFunctionControl,
     ) -> Result<(), Error> {
         Ok(())
     }

@@ -9,7 +9,8 @@ use crate::{
 use std::ffi::c_void;
 
 pub trait CorProfilerCallback {
-    fn initialize(&mut self, p_icorprofiler_info_unk: CorProfilerInfo) -> Result<(), Error> {
+    fn initialize(&mut self, p_icorprofiler_info_unk: &CorProfilerInfo) -> Result<(), Error> {
+        println!("CorProfilerCallback::initialize called!");
         Ok(())
     }
 

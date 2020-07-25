@@ -41,7 +41,7 @@ pub type HANDLE = *mut c_void;
 
 // guid types
 #[repr(C)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct GUID {
     pub data1: c_ulong,
     pub data2: c_ushort,

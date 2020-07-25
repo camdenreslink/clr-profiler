@@ -12,7 +12,7 @@ pub trait CorProfilerCallback2: CorProfilerCallback {
         &mut self,
         thread_id: ThreadID,
         cch_name: ULONG,
-        name: &[WCHAR],
+        name: &str,
     ) -> Result<(), Error> {
         Ok(())
     }
