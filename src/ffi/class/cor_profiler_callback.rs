@@ -1,14 +1,17 @@
 #![allow(non_snake_case)]
 use super::{CorProfilerAssemblyReferenceProvider, CorProfilerFunctionControl, CorProfilerInfo};
-use crate::ffi::{
-    int, mdMethodDef, AppDomainID, AssemblyID, ClassID, FunctionID, GCHandleID,
-    ICorProfilerCallback, ICorProfilerCallback2, ICorProfilerCallback3, ICorProfilerCallback4,
-    ICorProfilerCallback5, ICorProfilerCallback6, ICorProfilerCallback7, ICorProfilerCallback8,
-    ICorProfilerCallback9, IUnknown, ModuleID, ObjectID, ReJITID, ThreadID, BOOL,
-    COR_PRF_GC_REASON, COR_PRF_GC_ROOT_FLAGS, COR_PRF_GC_ROOT_KIND, COR_PRF_JIT_CACHE,
-    COR_PRF_MONITOR, COR_PRF_SUSPEND_REASON, COR_PRF_TRANSITION_REASON, DWORD, E_FAIL,
-    E_NOINTERFACE, GUID, HRESULT, LPCBYTE, LPVOID, REFGUID, REFIID, SIZE_T, S_OK, UINT, UINT_PTR,
-    ULONG, WCHAR,
+use crate::{
+    ffi::{
+        int, mdMethodDef, AppDomainID, AssemblyID, ClassID, FunctionID, GCHandleID,
+        ICorProfilerCallback, ICorProfilerCallback2, ICorProfilerCallback3, ICorProfilerCallback4,
+        ICorProfilerCallback5, ICorProfilerCallback6, ICorProfilerCallback7, ICorProfilerCallback8,
+        ICorProfilerCallback9, IUnknown, ModuleID, ObjectID, ReJITID, ThreadID, BOOL,
+        COR_PRF_GC_REASON, COR_PRF_GC_ROOT_FLAGS, COR_PRF_GC_ROOT_KIND, COR_PRF_JIT_CACHE,
+        COR_PRF_MONITOR, COR_PRF_SUSPEND_REASON, COR_PRF_TRANSITION_REASON, DWORD, E_FAIL,
+        E_NOINTERFACE, GUID, HRESULT, LPCBYTE, LPVOID, REFGUID, REFIID, SIZE_T, S_OK, UINT,
+        UINT_PTR, ULONG, WCHAR,
+    },
+    traits::CorProfilerCallback9,
 };
 use std::{
     ffi::c_void,
@@ -17,29 +20,30 @@ use std::{
 };
 
 #[repr(C)]
-pub struct CorProfilerCallbackVtbl<'a> {
-    pub IUnknown: IUnknown<CorProfilerCallback<'a>>,
-    pub ICorProfilerCallback: ICorProfilerCallback<CorProfilerCallback<'a>>,
-    pub ICorProfilerCallback2: ICorProfilerCallback2<CorProfilerCallback<'a>>,
-    pub ICorProfilerCallback3: ICorProfilerCallback3<CorProfilerCallback<'a>>,
-    pub ICorProfilerCallback4: ICorProfilerCallback4<CorProfilerCallback<'a>>,
-    pub ICorProfilerCallback5: ICorProfilerCallback5<CorProfilerCallback<'a>>,
-    pub ICorProfilerCallback6: ICorProfilerCallback6<CorProfilerCallback<'a>>,
-    pub ICorProfilerCallback7: ICorProfilerCallback7<CorProfilerCallback<'a>>,
-    pub ICorProfilerCallback8: ICorProfilerCallback8<CorProfilerCallback<'a>>,
-    pub ICorProfilerCallback9: ICorProfilerCallback9<CorProfilerCallback<'a>>,
+pub struct CorProfilerCallbackVtbl<'a, T: CorProfilerCallback9> {
+    pub IUnknown: IUnknown<CorProfilerCallback<'a, T>>,
+    pub ICorProfilerCallback: ICorProfilerCallback<CorProfilerCallback<'a, T>>,
+    pub ICorProfilerCallback2: ICorProfilerCallback2<CorProfilerCallback<'a, T>>,
+    pub ICorProfilerCallback3: ICorProfilerCallback3<CorProfilerCallback<'a, T>>,
+    pub ICorProfilerCallback4: ICorProfilerCallback4<CorProfilerCallback<'a, T>>,
+    pub ICorProfilerCallback5: ICorProfilerCallback5<CorProfilerCallback<'a, T>>,
+    pub ICorProfilerCallback6: ICorProfilerCallback6<CorProfilerCallback<'a, T>>,
+    pub ICorProfilerCallback7: ICorProfilerCallback7<CorProfilerCallback<'a, T>>,
+    pub ICorProfilerCallback8: ICorProfilerCallback8<CorProfilerCallback<'a, T>>,
+    pub ICorProfilerCallback9: ICorProfilerCallback9<CorProfilerCallback<'a, T>>,
 }
 
 #[repr(C)]
-pub struct CorProfilerCallback<'a> {
-    pub lpVtbl: *const CorProfilerCallbackVtbl<'a>,
+pub struct CorProfilerCallback<'a, T: CorProfilerCallback9> {
+    pub lpVtbl: *const CorProfilerCallbackVtbl<'a, T>,
     ref_count: AtomicU32,
     cor_profiler_info: Option<&'a CorProfilerInfo>,
+    profiler: T,
 }
 
-impl<'a> CorProfilerCallback<'a> {
-    pub fn new<'b>() -> &'b mut CorProfilerCallback<'a> {
-        let profiler = CorProfilerCallback {
+impl<'a, T: CorProfilerCallback9> CorProfilerCallback<'a, T> {
+    pub fn new<'b>(profiler: T) -> &'b mut CorProfilerCallback<'a, T> {
+        let cor_profiler_callback = CorProfilerCallback {
             lpVtbl: &CorProfilerCallbackVtbl {
                 IUnknown: IUnknown {
                     QueryInterface: Self::query_interface,
@@ -160,8 +164,9 @@ impl<'a> CorProfilerCallback<'a> {
             },
             ref_count: AtomicU32::new(1), // TODO: Why does ref_count have to start at 1? Isn't 0 more appropriate? Why is release called by profiling api without calling add_ref?
             cor_profiler_info: None,
+            profiler,
         };
-        Box::leak(Box::new(profiler))
+        Box::leak(Box::new(cor_profiler_callback))
     }
 
     pub fn cor_profiler_info(&self) -> &'a CorProfilerInfo {
@@ -178,7 +183,7 @@ impl<'a> CorProfilerCallback<'a> {
 }
 
 // IUnknown
-impl<'a> CorProfilerCallback<'a> {
+impl<'a, T: CorProfilerCallback9> CorProfilerCallback<'a, T> {
     pub unsafe extern "system" fn query_interface(
         &mut self,
         riid: REFIID,
@@ -199,7 +204,7 @@ impl<'a> CorProfilerCallback<'a> {
             || *riid == ICorProfilerCallback8::IID
             || *riid == ICorProfilerCallback9::IID
         {
-            *ppvObject = self as *mut CorProfilerCallback as LPVOID;
+            *ppvObject = self as *mut CorProfilerCallback<T> as LPVOID;
             self.add_ref();
             S_OK
         } else {
@@ -234,7 +239,7 @@ impl<'a> CorProfilerCallback<'a> {
         let ref_count = prev_ref_count - 1;
 
         if ref_count == 0 {
-            drop(Box::from_raw(self as *mut CorProfilerCallback));
+            drop(Box::from_raw(self as *mut CorProfilerCallback<T>));
         }
 
         ref_count
@@ -242,7 +247,7 @@ impl<'a> CorProfilerCallback<'a> {
 }
 
 // ICorProfilerCallback
-impl<'a> CorProfilerCallback<'a> {
+impl<'a, T: CorProfilerCallback9> CorProfilerCallback<'a, T> {
     pub unsafe extern "system" fn Initialize(
         &mut self,
         pICorProfilerInfoUnk: *const CorProfilerInfo,
@@ -697,7 +702,7 @@ impl<'a> CorProfilerCallback<'a> {
 }
 
 // ICorProfilerCallback2
-impl<'a> CorProfilerCallback<'a> {
+impl<'a, T: CorProfilerCallback9> CorProfilerCallback<'a, T> {
     pub unsafe extern "system" fn ThreadNameChanged(
         &mut self,
         threadId: ThreadID,

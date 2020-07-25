@@ -2,19 +2,31 @@ mod errors;
 mod ffi;
 mod traits;
 
-use ffi::{ClassFactory, CorProfilerCallback, E_FAIL, HRESULT, LPVOID, REFCLSID, REFIID};
+pub use clr_profiler_macros::*;
+pub use traits::{
+    CorProfilerCallback, CorProfilerCallback2, CorProfilerCallback3, CorProfilerCallback4,
+    CorProfilerCallback5, CorProfilerCallback6, CorProfilerCallback7, CorProfilerCallback8,
+    CorProfilerCallback9,
+};
+extern crate self as clr_profiler;
 
-#[no_mangle]
-unsafe extern "system" fn DllGetClassObject(
-    rclsid: REFCLSID,
-    riid: REFIID,
-    ppv: *mut LPVOID,
-) -> HRESULT {
-    if ppv.is_null() || *rclsid != CorProfilerCallback::CLSID {
-        println!("rclsid isn't correct.");
-        E_FAIL
-    } else {
-        let class_factory = ClassFactory::new();
-        class_factory.query_interface(riid, ppv)
+#[derive(
+    Clone,
+    CorProfilerCallback,
+    CorProfilerCallback2,
+    CorProfilerCallback3,
+    CorProfilerCallback4,
+    CorProfilerCallback5,
+    CorProfilerCallback6,
+    CorProfilerCallback7,
+    CorProfilerCallback8,
+    CorProfilerCallback9,
+)]
+struct Profiler {}
+impl Profiler {
+    pub fn new() -> Profiler {
+        Profiler {}
     }
 }
+
+register!(Profiler); // TODO: Remove this when testing mechanism is set up. Needs to be called by clients implementing their own profilers.
