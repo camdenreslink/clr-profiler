@@ -1,8 +1,8 @@
 #![allow(non_snake_case)]
 use crate::ffi::{
     AppDomainID, AssemblyID, ClassID, CorProfilerInfo, FunctionID, ModuleID, ObjectID, ThreadID,
-    ToVtbl, BOOL, COR_PRF_JIT_CACHE, COR_PRF_SUSPEND_REASON, COR_PRF_TRANSITION_REASON, DWORD,
-    GUID, HRESULT, REFGUID, S_OK, UINT_PTR, ULONG,
+    BOOL, COR_PRF_JIT_CACHE, COR_PRF_SUSPEND_REASON, COR_PRF_TRANSITION_REASON, DWORD, GUID,
+    HRESULT, REFGUID, S_OK, UINT_PTR, ULONG,
 };
 use std::ffi::c_void;
 

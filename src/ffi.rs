@@ -2,12 +2,10 @@
 mod class;
 mod hresult;
 mod interface;
-mod to_vtbl;
 
 pub use self::class::*;
 pub use self::hresult::*;
 pub use self::interface::*;
-pub use self::to_vtbl::ToVtbl;
 
 use core::ffi::c_void;
 
