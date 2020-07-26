@@ -1,0 +1,12 @@
+[package]
+name = "clr_profiler"
+version = "0.1.0"
+authors = ["Camden Reslink <camdenreslink@gmail.com>"]
+edition = "2018"
+license = "MIT"
+repository = "https://github.com/camdenreslink/clr-profiler"
+
+[dependencies]
+clr_profiler_macros = { version = "0.1.0", path = "../clr_profiler_macros" }
+uuid = "0.8"
+widestring = "0.4.2"

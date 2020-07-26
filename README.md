@@ -46,38 +46,6 @@ Some Helpful Resources:
 - https://gankra.github.io/blah/rust-layouts-and-abis/
 - https://docs.rs/intercom/0.2.0/src/intercom/combox.rs.html#105-134
 
-## Some Types That I Need To Define
-
-- ICorProfilerInfo (for the Initialize method, which takes an IUnkown)
-- ULONG
-- AppDomainID
-- AssemblyID
-- ModuleID
-- ClassID
-- FunctionID
-- BOOL
-- COR_PRF_JIT_CACHE
-- ThreadID
-- DWORD
-- COR_PRF_TRANSITION_REASON
-- COR_PRF_SUSPEND_REASON
-- ObjectID
-- UINT_PTR
-- REFGUID
-- WCHAR
-- COR_PRF_GC_REASON
-- COR_PRF_GC_ROOT_KIND
-- COR_PRF_GC_ROOT_FLAGS
-- GCHandleID
-- ReJITID
-- mdMethodDef
-- ICorProfilerFunctionControl
-- SIZE_T
-- ICorProfilerAssemblyReferenceProvider
-- LPCBYTE
-- 
-
 ## TODO
 
-- Some header file function signatures have `_Out_writes_to_` annotations. How does this translate into parameters in my rust function signature?
-- I may be able to make the ffi layer a little cleaner by adding some traits. For example, creating a `ComRefCount` trait that has to have a getter method to a `ref_count` field. Then I can create an `IUnknown` trait which depends on `ComRefCount` with a default implementation using the getter method. Then any COM coclass could just implement that trait and be done. Similar traits could be created for all other interfaces. The trait could have another method called `get_vtbl()`, which returns the trait methods as a struct of function pointers in the required order.
+- Create facility to run tests against multiple .net versions. For example, here is linux setup for [side-by-side .net core installations](https://www.hanselman.com/blog/SideBySideUserScopedNETCoreInstallationsOnLinuxWithDotnetinstallsh.aspx).
