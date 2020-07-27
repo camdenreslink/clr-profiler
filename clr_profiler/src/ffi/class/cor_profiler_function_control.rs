@@ -15,13 +15,13 @@ pub struct CorProfilerFunctionControl {
 }
 
 impl CorProfilerFunctionControl {
-    unsafe fn i_cor_profiler_function_control(&self) -> &ICorProfilerFunctionControl<Self> {
+    pub unsafe fn i_cor_profiler_function_control(&self) -> &ICorProfilerFunctionControl<Self> {
         &(*self.lpVtbl).ICorProfilerFunctionControl
     }
-    unsafe fn SetCodegenFlags(&self, flags: DWORD) -> HRESULT {
+    pub unsafe fn SetCodegenFlags(&self, flags: DWORD) -> HRESULT {
         (self.i_cor_profiler_function_control().SetCodegenFlags)(self, flags)
     }
-    unsafe fn SetILFunctionBody(
+    pub unsafe fn SetILFunctionBody(
         &self,
         cbNewILMethodHeader: ULONG,
         pbNewILMethodHeader: LPCBYTE,
@@ -32,7 +32,7 @@ impl CorProfilerFunctionControl {
             pbNewILMethodHeader,
         )
     }
-    unsafe fn SetILInstrumentedCodeMap(
+    pub unsafe fn SetILInstrumentedCodeMap(
         &self,
         cILMapEntries: ULONG,
         rgILMapEntries: *const COR_IL_MAP,

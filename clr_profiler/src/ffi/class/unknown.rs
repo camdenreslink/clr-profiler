@@ -13,16 +13,16 @@ pub struct Unknown {
 }
 
 impl Unknown {
-    unsafe fn i_unknown(&self) -> &IUnknown<Self> {
+    pub unsafe fn i_unknown(&self) -> &IUnknown<Self> {
         &(*self.lpVtbl).IUnknown
     }
-    unsafe fn QueryInterface(&mut self, riid: REFIID, ppvObject: *mut *mut c_void) -> HRESULT {
+    pub unsafe fn QueryInterface(&mut self, riid: REFIID, ppvObject: *mut *mut c_void) -> HRESULT {
         (self.i_unknown().QueryInterface)(self, riid, ppvObject)
     }
-    unsafe fn AddRef(&mut self) -> ULONG {
+    pub unsafe fn AddRef(&mut self) -> ULONG {
         (self.i_unknown().AddRef)(self)
     }
-    unsafe fn Release(&mut self) -> ULONG {
+    pub unsafe fn Release(&mut self) -> ULONG {
         (self.i_unknown().Release)(self)
     }
 }

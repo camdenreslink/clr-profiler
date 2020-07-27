@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use crate::{errors::Error, ffi::FunctionID, CorProfilerCallback8};
 
 pub trait CorProfilerCallback9: CorProfilerCallback8 {

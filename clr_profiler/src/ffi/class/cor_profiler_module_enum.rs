@@ -13,22 +13,22 @@ pub struct CorProfilerModuleEnum {
 }
 
 impl CorProfilerModuleEnum {
-    unsafe fn i_cor_profiler_module_enum(&self) -> &ICorProfilerModuleEnum<Self> {
+    pub unsafe fn i_cor_profiler_module_enum(&self) -> &ICorProfilerModuleEnum<Self> {
         &(*self.lpVtbl).ICorProfilerModuleEnum
     }
-    unsafe fn Skip(&self, celt: ULONG) -> HRESULT {
+    pub unsafe fn Skip(&self, celt: ULONG) -> HRESULT {
         (self.i_cor_profiler_module_enum().Skip)(self, celt)
     }
-    unsafe fn Reset(&self) -> HRESULT {
+    pub unsafe fn Reset(&self) -> HRESULT {
         (self.i_cor_profiler_module_enum().Reset)(self)
     }
-    unsafe fn Clone(&self, ppEnum: *mut *mut Self) -> HRESULT {
+    pub unsafe fn Clone(&self, ppEnum: *mut *mut Self) -> HRESULT {
         (self.i_cor_profiler_module_enum().Clone)(self, ppEnum)
     }
-    unsafe fn GetCount(&self, pcelt: *mut ULONG) -> HRESULT {
+    pub unsafe fn GetCount(&self, pcelt: *mut ULONG) -> HRESULT {
         (self.i_cor_profiler_module_enum().GetCount)(self, pcelt)
     }
-    unsafe fn Next(
+    pub unsafe fn Next(
         &self,
         celt: ULONG,
         objects: *mut ModuleID,

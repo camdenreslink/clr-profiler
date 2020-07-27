@@ -1,8 +1,9 @@
+#![allow(unused_variables)]
 use crate::{
     errors::Error,
     ffi::{
         int, GCHandleID, ObjectID, ThreadID, BOOL, COR_PRF_GC_REASON, COR_PRF_GC_ROOT_FLAGS,
-        COR_PRF_GC_ROOT_KIND, DWORD, UINT_PTR, ULONG, WCHAR,
+        COR_PRF_GC_ROOT_KIND, DWORD, UINT_PTR, ULONG,
     },
     CorProfilerCallback,
 };

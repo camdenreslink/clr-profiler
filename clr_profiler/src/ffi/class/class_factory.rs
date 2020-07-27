@@ -96,8 +96,8 @@ where
 
     pub unsafe extern "system" fn CreateInstance(
         &mut self,
-        pUnkOuter: *mut IUnknown<()>,
-        riid: REFIID,
+        _pUnkOuter: *mut IUnknown<()>,
+        _riid: REFIID,
         ppvObject: *mut *mut c_void,
     ) -> HRESULT {
         println!("Class Factory hit create_instance!");
@@ -106,7 +106,7 @@ where
         S_OK
     }
 
-    pub extern "system" fn LockServer(&mut self, fLock: BOOL) -> HRESULT {
+    pub extern "system" fn LockServer(&mut self, _fLock: BOOL) -> HRESULT {
         println!("Class Factory hit lock_server!");
         S_OK
     }

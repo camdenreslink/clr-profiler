@@ -1,3 +1,4 @@
+#![allow(unused_variables)]
 use crate::{
     errors::Error,
     ffi::{CorProfilerInfo, UINT},

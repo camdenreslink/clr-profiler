@@ -73,8 +73,8 @@ pub fn run_dotnet_core_profiled_process(project_name: &str, dotnet_version: &str
     }
 }
 
-pub fn spawn_dotnet_core_profiled_process(project_name: &str, dotnet_version: &str) {
-    // TODO: For long running processes, need to spawn and return a handle, so things
-    //       like http servers can have requests made against them and confirm the
-    //       profiling results. See: https://doc.rust-lang.org/std/process/struct.Child.html
-}
+// pub fn spawn_dotnet_core_profiled_process(project_name: &str, dotnet_version: &str) {
+// TODO: For long running processes, need to spawn and return a handle, so things
+//       like http servers can have requests made against them and confirm the
+//       profiling results. See: https://doc.rust-lang.org/std/process/struct.Child.html
+// }

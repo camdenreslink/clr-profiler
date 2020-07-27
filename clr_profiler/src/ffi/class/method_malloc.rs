@@ -13,10 +13,10 @@ pub struct MethodMalloc {
 }
 
 impl MethodMalloc {
-    unsafe fn i_method_malloc(&self) -> &IMethodMalloc<Self> {
+    pub unsafe fn i_method_malloc(&self) -> &IMethodMalloc<Self> {
         &(*self.lpVtbl).IMethodMalloc
     }
-    unsafe fn Alloc(&self, cb: ULONG) -> HRESULT {
+    pub unsafe fn Alloc(&self, cb: ULONG) -> HRESULT {
         (self.i_method_malloc().Alloc)(self, cb)
     }
 }
