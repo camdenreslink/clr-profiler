@@ -6,10 +6,11 @@ use crate::{
         ThreadID, BOOL, COR_PRF_JIT_CACHE, COR_PRF_SUSPEND_REASON, COR_PRF_TRANSITION_REASON,
         DWORD, GUID, HRESULT, REFGUID, UINT_PTR, ULONG,
     },
+    traits::ClrProfiler,
 };
 use std::ffi::c_void;
 
-pub trait CorProfilerCallback {
+pub trait CorProfilerCallback: ClrProfiler {
     fn initialize(&mut self, p_icorprofiler_info_unk: &CorProfilerInfo) -> Result<(), Error> {
         println!("CorProfilerCallback::initialize called!");
         Ok(())

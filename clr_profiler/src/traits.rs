@@ -1,3 +1,4 @@
+mod clr_profiler;
 mod cor_profiler_callback;
 mod cor_profiler_callback_2;
 mod cor_profiler_callback_3;
@@ -8,6 +9,7 @@ mod cor_profiler_callback_7;
 mod cor_profiler_callback_8;
 mod cor_profiler_callback_9;
 
+pub use self::clr_profiler::ClrProfiler;
 pub use self::cor_profiler_callback::CorProfilerCallback;
 pub use self::cor_profiler_callback_2::CorProfilerCallback2;
 pub use self::cor_profiler_callback_3::CorProfilerCallback3;

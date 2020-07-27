@@ -7,19 +7,19 @@ use syn::{parse_macro_input, DeriveInput, Type};
 pub fn register(item: TokenStream) -> TokenStream {
     let profiler_type = parse_macro_input!(item as Type);
     let output = quote! {
-        use clr_profiler::ffi::{ClassFactory, CorProfilerCallback as FFICorProfilerCallback, E_FAIL, HRESULT, LPVOID, REFCLSID, REFIID};
+        use clr_profiler::ffi::{ClassFactory, CorProfilerCallback as FFICorProfilerCallback, E_FAIL, GUID, HRESULT, LPVOID, REFCLSID, REFIID};
         #[no_mangle]
         unsafe extern "system" fn DllGetClassObject(
             rclsid: REFCLSID,
             riid: REFIID,
             ppv: *mut LPVOID,
         ) -> HRESULT {
-            if ppv.is_null() || *rclsid != FFICorProfilerCallback::<#profiler_type>::CLSID {
-                println!("rclsid isn't correct.");
+            let profiler = <#profiler_type>::new();
+            let clsid = GUID::from(*profiler.clsid());
+            if ppv.is_null() || *rclsid != clsid {
+                println!("CLSID didn't match. CLSID: {:?}", clsid);
                 E_FAIL
             } else {
-                //let profiler = Box::new(<#profiler_type>::new());
-                let profiler = <#profiler_type>::new();
                 let class_factory: &mut ClassFactory<#profiler_type> = ClassFactory::new(profiler);
                 class_factory.QueryInterface(riid, ppv)
             }

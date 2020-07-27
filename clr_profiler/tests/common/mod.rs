@@ -49,7 +49,11 @@ pub fn build_dotnet_core_project(project_name: &str) -> Output {
     }
 }
 
-pub fn run_dotnet_core_profiled_process(project_name: &str, dotnet_version: &str) -> Output {
+pub fn run_dotnet_core_profiled_process(
+    project_name: &str,
+    dotnet_version: &str,
+    clsid: &str,
+) -> Output {
     // TODO: This file path will fail if we try to run these tests on windows.
     //       Come up with cross-platform way of building paths.
     let dotnet_artifact_path = format!(
@@ -59,10 +63,11 @@ pub fn run_dotnet_core_profiled_process(project_name: &str, dotnet_version: &str
         v = dotnet_version
     );
     let profiler_artifact_path = format!("{p}target/debug/libtest_profilers.so", p = root_prefix());
+    let clsid = format!("{{{c}}}", c = clsid);
     let output = Command::new("dotnet")
         .arg(dotnet_artifact_path)
         .env("CORECLR_ENABLE_PROFILING", "1")
-        .env("CORECLR_PROFILER", "{DF63A541-5A33-4611-8829-F4E495985EE3}") // TODO: Should this be hard-coded?
+        .env("CORECLR_PROFILER", clsid) // TODO: Should this be hard-coded?
         .env("CORECLR_PROFILER_PATH", &profiler_artifact_path)
         .output()
         .expect("Failed to execute .NET process.");

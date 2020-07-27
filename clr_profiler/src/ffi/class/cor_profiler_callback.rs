@@ -173,14 +173,6 @@ impl<'a, T: CorProfilerCallback9> CorProfilerCallback<'a, T> {
     pub fn cor_profiler_info(&self) -> &'a CorProfilerInfo {
         self.cor_profiler_info.unwrap()
     }
-
-    // DF63A541-5A33-4611-8829-F4E495985EE3
-    pub const CLSID: GUID = GUID {
-        data1: 0xDF63A541,
-        data2: 0x5A33,
-        data3: 0x4611,
-        data4: [0x88, 0x29, 0xF4, 0xE4, 0x95, 0x98, 0x5E, 0xE3],
-    };
 }
 
 // IUnknown

@@ -8,6 +8,7 @@ repository = "https://github.com/camdenreslink/clr-profiler"
 
 [dependencies]
 clr_profiler = { version = "0.1.0", path = "../clr_profiler" }
+uuid = "0.8"
 
 [lib]
 crate-type = ["cdylib"]

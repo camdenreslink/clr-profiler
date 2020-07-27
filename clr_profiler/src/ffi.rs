@@ -8,6 +8,7 @@ pub use self::hresult::*;
 pub use self::interface::*;
 
 use core::ffi::c_void;
+use uuid::Uuid;
 
 // numeric types
 pub type c_int = i32;
@@ -47,6 +48,18 @@ pub struct GUID {
     pub data2: c_ushort,
     pub data3: c_ushort,
     pub data4: [c_uchar; 8],
+}
+impl From<Uuid> for GUID {
+    fn from(u: Uuid) -> Self {
+        let (data1, data2, data3, data4) = u.as_fields();
+
+        GUID {
+            data1,
+            data2,
+            data3,
+            data4: *data4,
+        }
+    }
 }
 pub type IID = GUID;
 pub type REFGUID = *const GUID;
