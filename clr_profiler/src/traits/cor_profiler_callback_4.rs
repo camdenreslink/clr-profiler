@@ -1,9 +1,7 @@
 #![allow(unused_variables)]
 use crate::{
-    errors::Error,
     ffi::{
-        mdMethodDef, CorProfilerFunctionControl, FunctionID, ModuleID, ObjectID, ReJITID, BOOL,
-        HRESULT, SIZE_T, ULONG,
+        mdMethodDef, CorProfilerFunctionControl, FunctionID, ModuleID, ObjectID, ReJITID, HRESULT,
     },
     CorProfilerCallback3,
 };
@@ -13,8 +11,8 @@ pub trait CorProfilerCallback4: CorProfilerCallback3 {
         &mut self,
         function_id: FunctionID,
         rejit_id: ReJITID,
-        f_is_safe_to_block: BOOL,
-    ) -> Result<(), Error> {
+        is_safe_to_block: bool,
+    ) -> Result<(), HRESULT> {
         Ok(())
     }
 
@@ -22,8 +20,8 @@ pub trait CorProfilerCallback4: CorProfilerCallback3 {
         &mut self,
         module_id: ModuleID,
         method_id: mdMethodDef,
-        p_function_control: &CorProfilerFunctionControl,
-    ) -> Result<(), Error> {
+        function_control: &CorProfilerFunctionControl,
+    ) -> Result<(), HRESULT> {
         Ok(())
     }
 
@@ -32,8 +30,8 @@ pub trait CorProfilerCallback4: CorProfilerCallback3 {
         function_id: FunctionID,
         rejit_id: ReJITID,
         hr_status: HRESULT, // TODO: Create enum that actual encodes possible statuses instead of hresult param
-        f_is_safe_to_block: BOOL,
-    ) -> Result<(), Error> {
+        is_safe_to_block: bool,
+    ) -> Result<(), HRESULT> {
         Ok(())
     }
 
@@ -43,26 +41,24 @@ pub trait CorProfilerCallback4: CorProfilerCallback3 {
         method_id: mdMethodDef,
         function_id: FunctionID,
         hr_status: HRESULT, // TODO: Create enum that actual encodes possible statuses instead of hresult param
-    ) -> Result<(), Error> {
+    ) -> Result<(), HRESULT> {
         Ok(())
     }
 
     fn moved_references_2(
         &mut self,
-        c_moved_object_id_ranges: ULONG,
         old_object_id_range_start: &[ObjectID],
         new_object_id_range_start: &[ObjectID],
-        c_object_id_range_length: &[SIZE_T],
-    ) -> Result<(), Error> {
+        object_id_range_length: &[usize],
+    ) -> Result<(), HRESULT> {
         Ok(())
     }
 
     fn surviving_references_2(
         &mut self,
-        c_surviving_object_id_ranges: ULONG,
         object_id_range_start: &[ObjectID],
-        c_object_id_range_length: &[SIZE_T],
-    ) -> Result<(), Error> {
+        c_object_id_range_length: &[usize],
+    ) -> Result<(), HRESULT> {
         Ok(())
     }
 }

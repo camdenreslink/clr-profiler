@@ -68,7 +68,7 @@ pub struct ICorProfilerInfo3<T> {
         pMinorVersion: *mut USHORT,
         pBuildNumber: *mut USHORT,
         pQFEVersion: *mut USHORT,
-        cchVersionString: *const ULONG,
+        cchVersionString: ULONG,
         pcchVersionString: *mut ULONG,
         szVersionString: *mut WCHAR,
     ) -> HRESULT,

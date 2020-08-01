@@ -8,6 +8,7 @@ pub use self::hresult::*;
 pub use self::interface::*;
 
 use core::ffi::c_void;
+use std::intrinsics::transmute;
 use uuid::Uuid;
 
 // numeric types
@@ -25,6 +26,7 @@ pub type ULONG32 = c_uint;
 pub type ULONG = c_ulong;
 pub type DWORD = c_ulong;
 pub type BYTE = c_uchar;
+pub type COR_SIGNATURE = BYTE;
 
 // char types
 pub type wchar_t = u16;
@@ -67,21 +69,22 @@ pub type REFCLSID = *const IID;
 pub type REFIID = *const IID;
 
 // profiler-specific pointers
-pub type ObjectID = UINT_PTR;
-pub type FunctionID = UINT_PTR;
 pub type AppDomainID = UINT_PTR;
 pub type AssemblyID = UINT_PTR;
-pub type ModuleID = UINT_PTR;
 pub type ClassID = UINT_PTR;
-pub type ThreadID = UINT_PTR;
-pub type GCHandleID = UINT_PTR;
-pub type ReJITID = UINT_PTR;
-pub type ProcessID = UINT_PTR;
 pub type ContextID = UINT_PTR;
-pub type COR_PRF_FRAME_INFO = UINT_PTR;
 pub type COR_PRF_ELT_INFO = UINT_PTR;
-pub type COR_SIGNATURE = BYTE;
+pub type COR_PRF_FRAME_INFO = UINT_PTR;
+pub type FunctionID = UINT_PTR;
+pub type GCHandleID = UINT_PTR;
+pub type ModuleID = UINT_PTR;
+pub type ObjectID = UINT_PTR;
 pub type PCCOR_SIGNATURE = *const COR_SIGNATURE;
+pub type ProcessID = UINT_PTR;
+pub type ReJITID = UINT_PTR;
+pub type ThreadID = UINT_PTR;
+pub type ClrInstanceID = USHORT;
+
 #[repr(C)]
 pub union FunctionIDOrClientID {
     functionID: FunctionID,
@@ -90,9 +93,9 @@ pub union FunctionIDOrClientID {
 
 // token types
 pub type mdToken = ULONG32;
+pub type mdFieldDef = mdToken;
 pub type mdMethodDef = mdToken;
 pub type mdTypeDef = mdToken;
-pub type mdFieldDef = mdToken;
 
 // function pointer types
 pub type FunctionEnter = unsafe extern "system" fn(funcID: FunctionID) -> ();
@@ -344,6 +347,11 @@ pub enum CorElementType {
     ELEMENT_TYPE_SENTINEL = 0x01 | CorElementType::ELEMENT_TYPE_MODIFIER as isize, // sentinel for varargs
     ELEMENT_TYPE_PINNED = 0x05 | CorElementType::ELEMENT_TYPE_MODIFIER as isize,
 }
+impl From<DWORD> for CorElementType {
+    fn from(d: DWORD) -> Self {
+        unsafe { transmute(d as DWORD) }
+    }
+}
 #[repr(C)]
 #[derive(Debug, PartialEq)]
 pub struct OSINFO {
@@ -452,6 +460,11 @@ pub enum COR_PRF_MONITOR {
         | COR_PRF_MONITOR::COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST as isize)
         | COR_PRF_MONITOR::COR_PRF_DISABLE_ALL_NGEN_IMAGES as isize,
 }
+impl From<DWORD> for COR_PRF_MONITOR {
+    fn from(d: DWORD) -> Self {
+        unsafe { transmute(d as DWORD) }
+    }
+}
 
 #[repr(C)]
 #[derive(Debug, PartialEq)]
@@ -475,9 +488,71 @@ pub enum COR_PRF_HIGH_MONITOR {
     // TODO: Duplicate discriminate values aren't allowed in rust c-like enums
     // COR_PRF_HIGH_MONITOR_IMMUTABLE = COR_PRF_HIGH_MONITOR::COR_PRF_HIGH_DISABLE_TIERED_COMPILATION as isize,
 }
+impl From<DWORD> for COR_PRF_HIGH_MONITOR {
+    fn from(d: DWORD) -> Self {
+        unsafe { transmute(d as DWORD) }
+    }
+}
 #[repr(C)]
 #[derive(Debug, PartialEq)]
 pub struct COR_PRF_METHOD {
     moduleId: ModuleID,
     methodId: mdMethodDef,
+}
+#[repr(C)]
+#[derive(Debug, PartialEq)]
+pub enum CorOpenFlags {
+    ofRead = 0x00000000,
+    ofWrite = 0x00000001,
+    // TODO: Duplicate discriminate values aren't allowed in rust c-like enums
+    // ofReadWriteMask = 0x00000001,
+    ofCopyMemory = 0x00000002,
+    ofCacheImage = 0x00000004,
+    ofManifestMetadata = 0x00000008,
+    ofReadOnly = 0x00000010,
+    ofTakeOwnership = 0x00000020,
+    ofNoTypeLib = 0x00000080,
+    ofNoTransform = 0x00001000,
+    ofReserved1 = 0x00000100,
+    ofReserved2 = 0x00000200,
+    ofReserved = 0xffffff40,
+}
+#[repr(C)]
+#[derive(Debug, PartialEq)]
+pub enum COR_PRF_SNAPSHOT_INFO {
+    COR_PRF_SNAPSHOT_DEFAULT = 0x0,
+    COR_PRF_SNAPSHOT_REGISTER_CONTEXT = 0x1,
+    COR_PRF_SNAPSHOT_X86_OPTIMIZED = 0x2,
+}
+#[repr(C)]
+#[derive(Debug, PartialEq)]
+pub enum COR_PRF_MODULE_FLAGS {
+    COR_PRF_MODULE_DISK = 0x1,
+    COR_PRF_MODULE_NGEN = 0x2,
+    COR_PRF_MODULE_DYNAMIC = 0x4,
+    COR_PRF_MODULE_COLLECTIBLE = 0x8,
+    COR_PRF_MODULE_RESOURCE = 0x10,
+    COR_PRF_MODULE_FLAT_LAYOUT = 0x20,
+    COR_PRF_MODULE_WINDOWS_RUNTIME = 0x40,
+}
+impl From<DWORD> for COR_PRF_MODULE_FLAGS {
+    fn from(d: DWORD) -> Self {
+        unsafe { transmute(d as DWORD) }
+    }
+}
+#[repr(C)]
+#[derive(Debug, PartialEq)]
+pub enum COR_PRF_REJIT_FLAGS {
+    COR_PRF_REJIT_BLOCK_INLINING = 0x1,
+    COR_PRF_REJIT_INLINING_CALLBACKS = 0x2,
+}
+#[repr(C)]
+#[derive(Debug, PartialEq)]
+pub enum COR_PRF_FINALIZER_FLAGS {
+    COR_PRF_FINALIZER_CRITICAL = 0x1,
+}
+impl From<DWORD> for COR_PRF_FINALIZER_FLAGS {
+    fn from(d: DWORD) -> Self {
+        unsafe { transmute(d as DWORD) }
+    }
 }

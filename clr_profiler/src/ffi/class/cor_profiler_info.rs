@@ -31,6 +31,7 @@ pub struct CorProfilerInfoVtbl {
     pub ICorProfilerInfo10: ICorProfilerInfo10<CorProfilerInfo>,
 }
 
+#[derive(Clone)]
 #[repr(C)]
 pub struct CorProfilerInfo {
     pub lpVtbl: *const CorProfilerInfoVtbl,
@@ -700,7 +701,7 @@ impl CorProfilerInfo {
         pMinorVersion: *mut USHORT,
         pBuildNumber: *mut USHORT,
         pQFEVersion: *mut USHORT,
-        cchVersionString: *const ULONG,
+        cchVersionString: ULONG,
         pcchVersionString: *mut ULONG,
         szVersionString: *mut WCHAR,
     ) -> HRESULT {

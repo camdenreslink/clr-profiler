@@ -33,7 +33,7 @@ impl<T> ClassFactory<T>
 where
     T: CorProfilerCallback9 + Clone,
 {
-    pub fn new<'a>(profiler: T) -> &'a mut ClassFactory<T> {
+    pub fn new<'b>(profiler: T) -> &'b mut ClassFactory<T> {
         let class_factory = ClassFactory {
             lpVtbl: &ClassFactoryVtbl {
                 IUnknown: IUnknown {
@@ -57,7 +57,6 @@ where
         riid: REFIID,
         ppvObject: *mut *mut c_void,
     ) -> HRESULT {
-        println!("Class Factory hit query_interface!");
         if *riid == IUnknown::IID || *riid == IClassFactory::IID {
             *ppvObject = self as *mut ClassFactory<T> as LPVOID;
             self.AddRef();
@@ -69,14 +68,12 @@ where
     }
 
     pub unsafe extern "system" fn AddRef(&mut self) -> ULONG {
-        println!("Class Factory hit add_ref!");
         // TODO: Which ordering is appropriate?
         let prev_ref_count = self.ref_count.fetch_add(1, Ordering::Relaxed);
         prev_ref_count + 1
     }
 
     pub unsafe extern "system" fn Release(&mut self) -> ULONG {
-        println!("Class Factory hit release!");
         // Ensure we are not trying to release the memory twice if
         // client calls release despite the ref_count being zero.
         // TODO: Which ordering is appropriate?
@@ -100,14 +97,12 @@ where
         _riid: REFIID,
         ppvObject: *mut *mut c_void,
     ) -> HRESULT {
-        println!("Class Factory hit create_instance!");
         *ppvObject = CorProfilerCallback::new(self.profiler.clone()) as *mut CorProfilerCallback<T>
             as LPVOID;
         S_OK
     }
 
     pub extern "system" fn LockServer(&mut self, _fLock: BOOL) -> HRESULT {
-        println!("Class Factory hit lock_server!");
         S_OK
     }
 }
