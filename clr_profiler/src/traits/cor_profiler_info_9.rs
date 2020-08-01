@@ -8,13 +8,13 @@ pub trait CorProfilerInfo9: CorProfilerInfo8 {
         &self,
         function_id: FunctionID,
         rejit_id: ReJITID,
-    ) -> Result<&[UINT_PTR], HRESULT>;
+    ) -> Result<Vec<UINT_PTR>, HRESULT>;
     fn get_il_to_native_mapping_3(
         &self,
         native_code_start_address: UINT_PTR,
-    ) -> Result<&[COR_DEBUG_IL_TO_NATIVE_MAP], HRESULT>;
+    ) -> Result<Vec<COR_DEBUG_IL_TO_NATIVE_MAP>, HRESULT>;
     fn get_code_info_4(
         &self,
         native_code_start_address: UINT_PTR,
-    ) -> Result<&[COR_PRF_CODE_INFO], HRESULT>;
+    ) -> Result<Vec<COR_PRF_CODE_INFO>, HRESULT>;
 }

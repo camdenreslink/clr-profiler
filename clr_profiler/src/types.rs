@@ -107,5 +107,6 @@ pub struct EnumNgenModuleMethodsInliningThisMethod<'a> {
 pub struct DynamicFunctionInfo {
     pub module_id: ModuleID,
     pub sig: PCCOR_SIGNATURE,
+    pub sig_length: u32,
     pub name: String,
 }

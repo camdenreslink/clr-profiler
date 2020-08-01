@@ -254,7 +254,6 @@ impl CorProfilerInfo for ProfilerInfo {
         }
     }
     fn get_module_info(&self, module_id: ModuleID) -> Result<ModuleInfo, HRESULT> {
-        // get module name length, with zero-length buffer call
         let mut name_buffer_length = MaybeUninit::uninit();
         unsafe {
             self.info().GetModuleInfo(
@@ -1798,7 +1797,55 @@ impl CorProfilerInfo8 for ProfilerInfo {
         &self,
         function_id: FunctionID,
     ) -> Result<DynamicFunctionInfo, HRESULT> {
-        todo!()
+        let mut name_buffer_length = MaybeUninit::uninit();
+        unsafe {
+            self.info().GetDynamicFunctionInfo(
+                function_id,
+                ptr::null_mut(),
+                ptr::null_mut(),
+                ptr::null_mut(),
+                0,
+                name_buffer_length.as_mut_ptr(),
+                ptr::null_mut(),
+            )
+        };
+
+        let name_buffer_length = unsafe { name_buffer_length.assume_init() };
+        let mut name_buffer = Vec::<WCHAR>::with_capacity(name_buffer_length as usize);
+        unsafe { name_buffer.set_len(name_buffer_length as usize) };
+
+        let mut name_length = MaybeUninit::uninit();
+        let mut module_id = MaybeUninit::uninit();
+        let mut sig = MaybeUninit::uninit();
+        let mut sig_length = MaybeUninit::uninit();
+        let hr = unsafe {
+            self.info().GetDynamicFunctionInfo(
+                function_id,
+                module_id.as_mut_ptr(),
+                sig.as_mut_ptr(),
+                sig_length.as_mut_ptr(),
+                name_buffer_length,
+                name_length.as_mut_ptr(),
+                name_buffer.as_mut_ptr(),
+            )
+        };
+        match hr {
+            S_OK => {
+                let module_id = unsafe { module_id.assume_init() };
+                let sig = unsafe { sig.assume_init() };
+                let sig_length = unsafe { sig_length.assume_init() };
+                let name = U16CString::from_vec_with_nul(name_buffer)
+                    .unwrap()
+                    .to_string_lossy();
+                Ok(DynamicFunctionInfo {
+                    module_id,
+                    sig,
+                    sig_length,
+                    name,
+                })
+            }
+            _ => Err(hr),
+        }
     }
 }
 impl CorProfilerInfo9 for ProfilerInfo {
@@ -1806,20 +1853,101 @@ impl CorProfilerInfo9 for ProfilerInfo {
         &self,
         function_id: FunctionID,
         rejit_id: ReJITID,
-    ) -> Result<&[UINT_PTR], HRESULT> {
-        todo!()
+    ) -> Result<Vec<UINT_PTR>, HRESULT> {
+        let mut addresses_buffer_length = MaybeUninit::uninit();
+        unsafe {
+            self.info().GetNativeCodeStartAddresses(
+                function_id,
+                rejit_id,
+                0,
+                addresses_buffer_length.as_mut_ptr(),
+                ptr::null_mut(),
+            )
+        };
+
+        let addresses_buffer_length = unsafe { addresses_buffer_length.assume_init() };
+        let mut addresses_buffer = Vec::<UINT_PTR>::with_capacity(addresses_buffer_length as usize);
+        unsafe { addresses_buffer.set_len(addresses_buffer_length as usize) };
+
+        let mut addresses_length = MaybeUninit::uninit();
+        let hr = unsafe {
+            self.info().GetNativeCodeStartAddresses(
+                function_id,
+                rejit_id,
+                addresses_buffer_length,
+                addresses_length.as_mut_ptr(),
+                addresses_buffer.as_mut_ptr(),
+            )
+        };
+        match hr {
+            S_OK => Ok(addresses_buffer),
+            _ => Err(hr),
+        }
     }
     fn get_il_to_native_mapping_3(
         &self,
         native_code_start_address: UINT_PTR,
-    ) -> Result<&[COR_DEBUG_IL_TO_NATIVE_MAP], HRESULT> {
-        todo!()
+    ) -> Result<Vec<COR_DEBUG_IL_TO_NATIVE_MAP>, HRESULT> {
+        let mut map_buffer_length = MaybeUninit::uninit();
+        unsafe {
+            self.info().GetILToNativeMapping3(
+                native_code_start_address,
+                0,
+                map_buffer_length.as_mut_ptr(),
+                ptr::null_mut(),
+            )
+        };
+
+        let map_buffer_length = unsafe { map_buffer_length.assume_init() };
+        let mut map = Vec::<COR_DEBUG_IL_TO_NATIVE_MAP>::with_capacity(map_buffer_length as usize);
+        unsafe { map.set_len(map_buffer_length as usize) };
+        let mut map_length = MaybeUninit::uninit();
+        let hr = unsafe {
+            self.info().GetILToNativeMapping3(
+                native_code_start_address,
+                map_buffer_length,
+                map_length.as_mut_ptr(),
+                map.as_mut_ptr(),
+            )
+        };
+        match hr {
+            S_OK => Ok(map),
+            _ => Err(hr),
+        }
     }
     fn get_code_info_4(
         &self,
         native_code_start_address: UINT_PTR,
-    ) -> Result<&[COR_PRF_CODE_INFO], HRESULT> {
-        todo!()
+    ) -> Result<Vec<COR_PRF_CODE_INFO>, HRESULT> {
+        let mut code_info_buffer_length = MaybeUninit::uninit();
+        unsafe {
+            self.info().GetCodeInfo4(
+                native_code_start_address,
+                0,
+                code_info_buffer_length.as_mut_ptr(),
+                ptr::null_mut(),
+            )
+        };
+
+        let code_info_buffer_length = unsafe { code_info_buffer_length.assume_init() };
+        let mut code_info =
+            Vec::<COR_PRF_CODE_INFO>::with_capacity(code_info_buffer_length as usize);
+        unsafe { code_info.set_len(code_info_buffer_length as usize) };
+
+        let mut code_info_length = MaybeUninit::uninit();
+        let hr = unsafe {
+            self.info().GetCodeInfo4(
+                native_code_start_address,
+                code_info_buffer_length,
+                code_info_length.as_mut_ptr(),
+                code_info.as_mut_ptr(),
+            )
+        };
+
+        match hr {
+            S_OK => Ok(code_info),
+            _ => Err(hr),
+        }
     }
 }
 impl CorProfilerInfo10 for ProfilerInfo {
@@ -1829,13 +1957,44 @@ impl CorProfilerInfo10 for ProfilerInfo {
         callback: ObjectReferenceCallback,
         client_data: *const std::ffi::c_void,
     ) -> Result<(), HRESULT> {
-        todo!()
+        let hr = unsafe {
+            self.info()
+                .EnumerateObjectReferences(object_id, callback, client_data)
+        };
+
+        match hr {
+            S_OK => Ok(()),
+            _ => Err(hr),
+        }
     }
     fn is_frozen_object(&self, object_id: ObjectID) -> Result<bool, HRESULT> {
-        todo!()
+        let mut is_frozen = MaybeUninit::uninit();
+        let hr = unsafe {
+            self.info()
+                .IsFrozenObject(object_id, is_frozen.as_mut_ptr())
+        };
+        match hr {
+            S_OK => {
+                let is_frozen = unsafe { is_frozen.assume_init() };
+                let is_frozen = is_frozen > 0;
+                Ok(is_frozen)
+            }
+            _ => Err(hr),
+        }
     }
     fn get_loh_object_size_threshold(&self) -> Result<u32, HRESULT> {
-        todo!()
+        let mut threshold = MaybeUninit::uninit();
+        let hr = unsafe {
+            self.info()
+                .GetLOHObjectSizeThreshold(threshold.as_mut_ptr())
+        };
+        match hr {
+            S_OK => {
+                let threshold = unsafe { threshold.assume_init() };
+                Ok(threshold)
+            }
+            _ => Err(hr),
+        }
     }
     fn request_rejit_with_inliners(
         &self,
@@ -1843,12 +2002,35 @@ impl CorProfilerInfo10 for ProfilerInfo {
         module_ids: &[ModuleID],
         method_ids: &[mdMethodDef], // TODO: Maybe we want the pairs to be actual tuples. Simple zip op.
     ) -> Result<(), HRESULT> {
-        todo!()
+        let dw_rejit_flags = dw_rejit_flags as DWORD;
+        let methods_length = module_ids.len() as u32;
+        let module_ids = module_ids.as_ptr();
+        let method_ids = method_ids.as_ptr();
+        let hr = unsafe {
+            self.info().RequestReJITWithInliners(
+                dw_rejit_flags,
+                methods_length,
+                module_ids,
+                method_ids,
+            )
+        };
+        match hr {
+            S_OK => Ok(()),
+            _ => Err(hr),
+        }
     }
     fn suspend_runtime(&self) -> Result<(), HRESULT> {
-        todo!()
+        let hr = unsafe { self.info().SuspendRuntime() };
+        match hr {
+            S_OK => Ok(()),
+            _ => Err(hr),
+        }
     }
     fn resume_runtime(&self) -> Result<(), HRESULT> {
-        todo!()
+        let hr = unsafe { self.info().ResumeRuntime() };
+        match hr {
+            S_OK => Ok(()),
+            _ => Err(hr),
+        }
     }
 }

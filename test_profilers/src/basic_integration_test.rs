@@ -41,7 +41,7 @@ impl CorProfilerCallback for Profiler {
     fn module_attached_to_assembly(
         &mut self,
         module_id: ModuleID,
-        assembly_id: AssemblyID,
+        _assembly_id: AssemblyID,
     ) -> Result<(), HRESULT> {
         let module_info = self.profiler_info().get_module_info(module_id)?;
         println!("{:?}", module_info);
