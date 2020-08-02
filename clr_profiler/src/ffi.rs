@@ -32,7 +32,7 @@ pub type COR_SIGNATURE = BYTE;
 pub type wchar_t = u16;
 pub type WCHAR = wchar_t;
 pub type LPCWSTR = *const WCHAR;
-pub type LPWSTR = *mut WCHAR;
+pub type MDUTF8CSTR = *const c_uchar;
 
 // pointer types
 pub type UINT_PTR = usize;
@@ -41,6 +41,7 @@ pub type LPCBYTE = *const BYTE;
 pub type SIZE_T = ULONG_PTR;
 pub type LPVOID = *mut c_void;
 pub type HANDLE = *mut c_void;
+pub type UVCP_CONSTANT = *const c_void;
 
 // guid types
 #[repr(C)]
@@ -79,11 +80,13 @@ pub type FunctionID = UINT_PTR;
 pub type GCHandleID = UINT_PTR;
 pub type ModuleID = UINT_PTR;
 pub type ObjectID = UINT_PTR;
+pub type PCOR_SIGNATURE = *mut COR_SIGNATURE;
 pub type PCCOR_SIGNATURE = *const COR_SIGNATURE;
 pub type ProcessID = UINT_PTR;
 pub type ReJITID = UINT_PTR;
 pub type ThreadID = UINT_PTR;
 pub type ClrInstanceID = USHORT;
+pub type HCORENUM = *const c_void;
 
 #[repr(C)]
 pub union FunctionIDOrClientID {
@@ -93,9 +96,31 @@ pub union FunctionIDOrClientID {
 
 // token types
 pub type mdToken = ULONG32;
+pub type mdModule = mdToken;
+pub type mdTypeRef = mdToken;
+pub type mdTypeDef = mdToken;
 pub type mdFieldDef = mdToken;
 pub type mdMethodDef = mdToken;
-pub type mdTypeDef = mdToken;
+pub type mdParamDef = mdToken;
+pub type mdInterfaceImpl = mdToken;
+pub type mdMemberRef = mdToken;
+pub type mdCustomAttribute = mdToken;
+pub type mdPermission = mdToken;
+pub type mdSignature = mdToken;
+pub type mdEvent = mdToken;
+pub type mdProperty = mdToken;
+pub type mdModuleRef = mdToken;
+pub type mdAssembly = mdToken;
+pub type mdAssemblyRef = mdToken;
+pub type mdFile = mdToken;
+pub type mdExportedType = mdToken;
+pub type mdManifestResource = mdToken;
+pub type mdTypeSpec = mdToken;
+pub type mdGenericParam = mdToken;
+pub type mdMethodSpec = mdToken;
+pub type mdGenericParamConstraint = mdToken;
+pub type mdString = mdToken;
+pub type mdCPToken = mdToken;
 
 // function pointer types
 pub type FunctionEnter = unsafe extern "system" fn(funcID: FunctionID) -> ();
@@ -366,7 +391,7 @@ pub struct ASSEMBLYMETADATA {
     usMinorVersion: USHORT,   // Minor Version.
     usBuildNumber: USHORT,    // Build Number.
     usRevisionNumber: USHORT, // Revision Number.
-    szLocale: LPWSTR,         // Locale.
+    szLocale: *mut WCHAR,     // Locale.
     cbLocale: ULONG,          // [IN/OUT] Size of the buffer in wide chars/Actual size.
     rProcessor: *const DWORD, // Processor ID array.
     ulProcessor: ULONG, // [IN/OUT] Size of the Processor ID array/Actual # of entries filled in.
@@ -555,4 +580,18 @@ impl From<DWORD> for COR_PRF_FINALIZER_FLAGS {
     fn from(d: DWORD) -> Self {
         unsafe { transmute(d as DWORD) }
     }
+}
+#[repr(C)]
+#[derive(Debug, PartialEq)]
+pub enum CorSaveSize {
+    cssAccurate = 0x0000,            // Find exact save size, accurate but slower.
+    cssQuick = 0x0001,               // Estimate save size, may pad estimate, but faster.
+    cssDiscardTransientCAs = 0x0002, // remove all of the CAs of discardable types
+}
+#[repr(C)]
+#[derive(Debug, PartialEq)]
+pub struct COR_SECATTR {
+    tkCtor: mdMemberRef,             // Ref to constructor of security attribute.
+    pCustomAttribute: *const c_void, // Blob describing ctor args and field/property values.
+    cbCustomAttribute: ULONG,        // Length of the above blob.
 }
