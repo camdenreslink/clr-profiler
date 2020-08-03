@@ -20,7 +20,7 @@ pub struct IMetaDataEmit2<T> {
         unsafe extern "system" fn(this: &T, szFile: LPCWSTR, dwSaveFlags: DWORD) -> HRESULT,
     pub SaveDeltaToStream: unsafe extern "system" fn(
         this: &T,
-        pIStream: *const Unknown, // TODO: IStream
+        pIStream: *const Unknown, // TODO: Implement ISequentialStream, IStream and then Stream co-class
         dwSaveFlags: DWORD,
     ) -> HRESULT,
     pub SaveDeltaToMemory:

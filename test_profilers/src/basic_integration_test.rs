@@ -1,5 +1,5 @@
 use clr_profiler::{
-    ffi::{AssemblyID, ModuleID, COR_PRF_MONITOR, HRESULT},
+    ffi::{AssemblyID, FunctionID, ModuleID, COR_PRF_MONITOR, HRESULT},
     register, ClrProfiler, CorProfilerCallback, CorProfilerCallback2, CorProfilerCallback3,
     CorProfilerCallback4, CorProfilerCallback5, CorProfilerCallback6, CorProfilerCallback7,
     CorProfilerCallback8, CorProfilerCallback9, CorProfilerInfo, ProfilerInfo,
@@ -34,17 +34,19 @@ impl CorProfilerCallback for Profiler {
 
         // Set the event mask
         self.profiler_info()
-            .set_event_mask(COR_PRF_MONITOR::COR_PRF_ALL)?;
+            .set_event_mask(COR_PRF_MONITOR::COR_PRF_ALL)?; // COR_PRF_MONITOR_JIT_COMPILATION
 
         Ok(())
     }
-    fn module_attached_to_assembly(
+    fn jit_compilation_started(
         &mut self,
-        module_id: ModuleID,
-        _assembly_id: AssemblyID,
+        function_id: FunctionID,
+        _is_safe_to_block: bool,
     ) -> Result<(), HRESULT> {
-        let module_info = self.profiler_info().get_module_info(module_id)?;
-        println!("{:?}", module_info);
+        // 1. Modify method header
+        // 2. Add a prologue
+        // 3. Add an epilogue
+        // 4. Modify SEH tables
         Ok(())
     }
 }

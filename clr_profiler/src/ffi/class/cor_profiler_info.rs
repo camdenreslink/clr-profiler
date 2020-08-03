@@ -1,4 +1,5 @@
 #![allow(non_snake_case)]
+use super::MetaDataImport;
 use crate::ffi::{
     int, mdFieldDef, mdMethodDef, mdToken, mdTypeDef, AppDomainID, AssemblyID, ClassID, ContextID,
     CorElementType, CorProfilerFunctionEnum, CorProfilerMethodEnum, CorProfilerModuleEnum,
@@ -172,8 +173,7 @@ impl CorProfilerInfo {
         &self,
         functionId: FunctionID,
         riid: REFIID,
-        // I think this needs to be a coclass that implements one of these metadata interfaces: https://docs.microsoft.com/en-us/windows/win32/api/rometadataapi/
-        ppImport: *mut *mut Unknown,
+        ppImport: *mut *mut MetaDataImport,
         pToken: *mut mdToken,
     ) -> HRESULT {
         (self.i_cor_profiler_info().GetTokenAndMetaDataFromFunction)(
@@ -205,7 +205,7 @@ impl CorProfilerInfo {
         dwOpenFlags: DWORD,
         riid: REFIID,
         // I think this needs to be a coclass that implements one of these metadata interfaces: https://docs.microsoft.com/en-us/windows/win32/api/rometadataapi/
-        ppOut: *mut *mut Unknown,
+        ppOut: *mut *mut MetaDataImport,
     ) -> HRESULT {
         (self.i_cor_profiler_info().GetModuleMetaData)(self, moduleId, dwOpenFlags, riid, ppOut)
     }
@@ -303,13 +303,13 @@ impl CorProfilerInfo {
     }
     pub unsafe fn GetInprocInspectionInterface(
         &self,
-        ppicd: *mut *mut Unknown, // Can query for ICorDebugProcess
+        ppicd: *mut *mut Unknown, // TODO: Implement ICorDebugProcess and CorDebugProcess co-class
     ) -> HRESULT {
         (self.i_cor_profiler_info().GetInprocInspectionInterface)(self, ppicd)
     }
     pub unsafe fn GetInprocInspectionIThisThread(
         &self,
-        ppicd: *mut *mut Unknown, // Can query for ICorDebugThread
+        ppicd: *mut *mut Unknown, // TODO: Implement ICorDebugProcess and CorDebugProcess co-class
     ) -> HRESULT {
         (self.i_cor_profiler_info().GetInprocInspectionIThisThread)(self, ppicd)
     }

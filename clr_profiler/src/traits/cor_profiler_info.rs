@@ -1,9 +1,9 @@
 use crate::{
     ffi::{
         mdMethodDef, AppDomainID, AssemblyID, ClassID, ContextID, CorOpenFlags, FunctionEnter,
-        FunctionID, FunctionIDMapper, FunctionLeave, FunctionTailcall, MethodMalloc, ModuleID,
-        ObjectID, ThreadID, Unknown, COR_DEBUG_IL_TO_NATIVE_MAP, COR_IL_MAP, COR_PRF_MONITOR,
-        DWORD, HANDLE, HRESULT, LPCBYTE,
+        FunctionID, FunctionIDMapper, FunctionLeave, FunctionTailcall, MetaDataImport,
+        MethodMalloc, ModuleID, ObjectID, ThreadID, COR_DEBUG_IL_TO_NATIVE_MAP, COR_IL_MAP,
+        COR_PRF_MONITOR, DWORD, HANDLE, HRESULT, LPCBYTE,
     },
     AppDomainInfo, ArrayClassInfo, AssemblyInfo, ClassInfo, FunctionInfo, FunctionTokenAndMetadata,
     IlFunctionBody, ModuleInfo,
@@ -36,7 +36,7 @@ pub trait CorProfilerInfo {
         &self,
         module_id: ModuleID,
         open_flags: CorOpenFlags,
-    ) -> Result<&mut Unknown, HRESULT>; // TODO: Ok result needs to implement IMetaDataImport
+    ) -> Result<&mut MetaDataImport, HRESULT>;
     fn get_il_function_body(
         &self,
         module_id: ModuleID,

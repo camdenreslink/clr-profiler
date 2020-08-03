@@ -2,8 +2,8 @@
 use crate::ffi::{
     int, mdCustomAttribute, mdEvent, mdFieldDef, mdInterfaceImpl, mdMemberRef, mdMethodDef,
     mdModule, mdModuleRef, mdParamDef, mdPermission, mdProperty, mdSignature, mdString, mdToken,
-    mdTypeDef, mdTypeRef, mdTypeSpec, Unknown, BOOL, COR_FIELD_OFFSET, DWORD, GUID, HCORENUM,
-    HRESULT, LPCWSTR, MDUTF8CSTR, PCCOR_SIGNATURE, REFIID, ULONG, UVCP_CONSTANT, WCHAR,
+    mdTypeDef, mdTypeRef, mdTypeSpec, BOOL, COR_FIELD_OFFSET, DWORD, GUID, HCORENUM, HRESULT,
+    LPCWSTR, MDUTF8CSTR, PCCOR_SIGNATURE, REFIID, ULONG, UVCP_CONSTANT, WCHAR,
 };
 use std::ffi::c_void;
 
@@ -77,7 +77,7 @@ pub struct IMetaDataImport<T> {
         this: &T,
         tr: mdTypeRef,
         riid: REFIID,
-        ppIScope: *mut *mut Unknown, // TODO: What actual class here?
+        ppIScope: *mut *mut T,
         ptd: *mut mdTypeDef,
     ) -> HRESULT,
     pub EnumMembers: unsafe extern "system" fn(

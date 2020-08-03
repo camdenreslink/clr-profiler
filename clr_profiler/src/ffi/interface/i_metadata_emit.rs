@@ -2,8 +2,9 @@
 use crate::ffi::{
     mdCustomAttribute, mdEvent, mdFieldDef, mdMemberRef, mdMethodDef, mdModuleRef, mdParamDef,
     mdPermission, mdProperty, mdSignature, mdString, mdToken, mdTypeDef, mdTypeRef, mdTypeSpec,
-    CorSaveSize, Unknown, COR_FIELD_OFFSET, COR_SECATTR, DWORD, GUID, HRESULT, LPCWSTR,
-    PCCOR_SIGNATURE, PCOR_SIGNATURE, ULONG,
+    CorSaveSize, MetaDataAssemblyEmit, MetaDataAssemblyImport, MetaDataImport, Unknown,
+    COR_FIELD_OFFSET, COR_SECATTR, DWORD, GUID, HRESULT, LPCWSTR, PCCOR_SIGNATURE, PCOR_SIGNATURE,
+    ULONG,
 };
 use std::ffi::c_void;
 
@@ -13,7 +14,7 @@ pub struct IMetaDataEmit<T> {
     pub Save: unsafe extern "system" fn(this: &T, szName: LPCWSTR, dwSaveFlags: DWORD) -> HRESULT,
     pub SaveToStream: unsafe extern "system" fn(
         this: &T,
-        pIStream: *const Unknown, // TODO: IStream
+        pIStream: *const Unknown, // TODO: Implement ISequentialStream, IStream and then Stream co-class
         dwSaveFlags: DWORD,
     ) -> HRESULT,
     pub GetSaveSize:
@@ -61,12 +62,12 @@ pub struct IMetaDataEmit<T> {
     ) -> HRESULT,
     pub DefineImportType: unsafe extern "system" fn(
         this: &T,
-        pAssemImport: *const Unknown, // TODO: Should be MetaDataAssemblyImport
+        pAssemImport: *const MetaDataAssemblyImport,
         pbHashValue: *const c_void,
         cbHashValue: ULONG,
-        pImport: *const Unknown, // TODO: MetaDataImport
+        pImport: *const MetaDataImport,
         tdImport: mdTypeDef,
-        pAssemEmit: *const Unknown, // TODO: MetaDataAssemblyEmit
+        pAssemEmit: *const MetaDataAssemblyEmit,
         ptr: *mut mdTypeRef,
     ) -> HRESULT,
     pub DefineMemberRef: unsafe extern "system" fn(
@@ -81,9 +82,9 @@ pub struct IMetaDataEmit<T> {
         this: &T,
         pbHashValue: *const c_void,
         cbHashValue: ULONG,
-        pImport: *const Unknown, // IMetaDataImport
+        pImport: *const MetaDataImport,
         mbMember: mdToken,
-        pAssemEmit: *const Unknown, // IMetaDataAssemblyEmit
+        pAssemEmit: *const MetaDataAssemblyEmit,
         tkParent: mdToken,
         pmr: *mut mdMemberRef,
     ) -> HRESULT,
@@ -274,13 +275,13 @@ pub struct IMetaDataEmit<T> {
     ) -> HRESULT,
     pub TranslateSigWithScope: unsafe extern "system" fn(
         this: &T,
-        pAssemImport: *const Unknown, // TODO: IMetaDataAssemblyImport
+        pAssemImport: *const MetaDataAssemblyImport,
         pbHashValue: *const c_void,
         cbHashValue: ULONG,
-        import: *const Unknown, // TODO: IMetaDataImport
+        import: *const MetaDataImport,
         pbSigBlob: PCCOR_SIGNATURE,
         cbSigBlob: ULONG,
-        pAssemEmit: *const Unknown, // TODO: IMetaDataAssemblyEmit
+        pAssemEmit: *const MetaDataAssemblyEmit,
         emit: *const T,
         pvTranslatedSig: PCOR_SIGNATURE,
         cbTranslatedSigMax: ULONG,
@@ -291,8 +292,8 @@ pub struct IMetaDataEmit<T> {
     pub SetFieldRVA: unsafe extern "system" fn(this: &T, fd: mdFieldDef, ulRVA: ULONG) -> HRESULT,
     pub Merge: unsafe extern "system" fn(
         this: &T,
-        pImport: *const Unknown,       // TODO: IMetaDataImport
-        pHostMapToken: *const Unknown, // TODO: IMapToken
+        pImport: *const MetaDataImport,
+        pHostMapToken: *const Unknown, // TODO: Implement IMapToken and MapToken coclass
         pHandler: *const Unknown,
     ) -> HRESULT,
     pub MergeEnd: unsafe extern "system" fn(this: &T) -> HRESULT,

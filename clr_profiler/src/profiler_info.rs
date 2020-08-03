@@ -6,13 +6,13 @@ use crate::{
         FunctionEnter, FunctionEnter2, FunctionEnter3, FunctionEnter3WithInfo, FunctionID,
         FunctionIDMapper, FunctionIDMapper2, FunctionLeave, FunctionLeave2, FunctionLeave3,
         FunctionLeave3WithInfo, FunctionTailcall, FunctionTailcall2, FunctionTailcall3,
-        FunctionTailcall3WithInfo, MethodMalloc, ModuleID, ObjectID, ObjectReferenceCallback,
-        ReJITID, StackSnapshotCallback, ThreadID, Unknown, BOOL, BYTE, COR_DEBUG_IL_TO_NATIVE_MAP,
-        COR_FIELD_OFFSET, COR_IL_MAP, COR_PRF_CODE_INFO, COR_PRF_ELT_INFO, COR_PRF_EX_CLAUSE_INFO,
-        COR_PRF_FRAME_INFO, COR_PRF_GC_GENERATION_RANGE, COR_PRF_HIGH_MONITOR,
-        COR_PRF_MODULE_FLAGS, COR_PRF_MONITOR, COR_PRF_REJIT_FLAGS, COR_PRF_SNAPSHOT_INFO,
-        COR_PRF_STATIC_TYPE, DWORD, GUID, HANDLE, HRESULT, LPCBYTE, S_OK, UINT_PTR, ULONG, ULONG32,
-        WCHAR,
+        FunctionTailcall3WithInfo, IMetaDataImport2, MetaDataImport, MethodMalloc, ModuleID,
+        ObjectID, ObjectReferenceCallback, ReJITID, StackSnapshotCallback, ThreadID, BOOL, BYTE,
+        COR_DEBUG_IL_TO_NATIVE_MAP, COR_FIELD_OFFSET, COR_IL_MAP, COR_PRF_CODE_INFO,
+        COR_PRF_ELT_INFO, COR_PRF_EX_CLAUSE_INFO, COR_PRF_FRAME_INFO, COR_PRF_GC_GENERATION_RANGE,
+        COR_PRF_HIGH_MONITOR, COR_PRF_MODULE_FLAGS, COR_PRF_MONITOR, COR_PRF_REJIT_FLAGS,
+        COR_PRF_SNAPSHOT_INFO, COR_PRF_STATIC_TYPE, DWORD, GUID, HANDLE, HRESULT, LPCBYTE, S_OK,
+        UINT_PTR, ULONG, ULONG32, WCHAR,
     },
     AppDomainInfo, ArrayClassInfo, ArrayObjectInfo, AssemblyInfo, ClassInfo, ClassInfo2,
     ClassLayout, CorProfilerInfo, CorProfilerInfo10, CorProfilerInfo2, CorProfilerInfo3,
@@ -302,9 +302,9 @@ impl CorProfilerInfo for ProfilerInfo {
         &self,
         module_id: ModuleID,
         open_flags: CorOpenFlags,
-    ) -> Result<&mut Unknown, HRESULT> {
+    ) -> Result<&mut MetaDataImport, HRESULT> {
         let mut metadata_import = MaybeUninit::uninit();
-        let riid = GUID::from(Uuid::parse_str("7DAC8207-D3AE-4C75-9B67-92801A497D44").unwrap()); // TODO: This needs to come from an IMetaDataImport implementation
+        let riid = IMetaDataImport2::IID; // TODO: This needs to come from an IMetaDataImport implementation
         let hr = unsafe {
             self.info().GetModuleMetaData(
                 module_id,

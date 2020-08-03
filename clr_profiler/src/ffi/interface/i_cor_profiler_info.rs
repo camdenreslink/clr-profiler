@@ -1,9 +1,10 @@
 #![allow(non_snake_case)]
 use crate::ffi::{
     mdMethodDef, mdToken, mdTypeDef, AppDomainID, AssemblyID, ClassID, ContextID, CorElementType,
-    FunctionEnter, FunctionID, FunctionIDMapper, FunctionLeave, FunctionTailcall, MethodMalloc,
-    ModuleID, ObjectID, ProcessID, ThreadID, Unknown, BOOL, COR_DEBUG_IL_TO_NATIVE_MAP, COR_IL_MAP,
-    DWORD, GUID, HANDLE, HRESULT, LPCBYTE, REFIID, ULONG, ULONG32, WCHAR,
+    FunctionEnter, FunctionID, FunctionIDMapper, FunctionLeave, FunctionTailcall, MetaDataImport,
+    MethodMalloc, ModuleID, ObjectID, ProcessID, ThreadID, Unknown, BOOL,
+    COR_DEBUG_IL_TO_NATIVE_MAP, COR_IL_MAP, DWORD, GUID, HANDLE, HRESULT, LPCBYTE, REFIID, ULONG,
+    ULONG32, WCHAR,
 };
 
 #[repr(C)]
@@ -75,8 +76,7 @@ pub struct ICorProfilerInfo<T> {
         this: &T,
         functionId: FunctionID,
         riid: REFIID,
-        // I think this needs to be a coclass that implements one of these metadata interfaces: https://docs.microsoft.com/en-us/windows/win32/api/rometadataapi/
-        ppImport: *mut *mut Unknown,
+        ppImport: *mut *mut MetaDataImport,
         pToken: *mut mdToken,
     ) -> HRESULT,
     pub GetModuleInfo: unsafe extern "system" fn(
@@ -93,8 +93,7 @@ pub struct ICorProfilerInfo<T> {
         moduleId: ModuleID,
         dwOpenFlags: DWORD,
         riid: REFIID,
-        // I think this needs to be a coclass that implements one of these metadata interfaces: https://docs.microsoft.com/en-us/windows/win32/api/rometadataapi/
-        ppOut: *mut *mut Unknown,
+        ppOut: *mut *mut MetaDataImport,
     ) -> HRESULT,
     pub GetILFunctionBody: unsafe extern "system" fn(
         this: &T,
