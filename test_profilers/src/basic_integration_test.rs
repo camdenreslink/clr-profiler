@@ -1,8 +1,9 @@
 use clr_profiler::{
-    ffi::{AssemblyID, FunctionID, ModuleID, COR_PRF_MONITOR, HRESULT},
+    cil::Method,
+    ffi::{CorOpenFlags, FunctionID, COR_PRF_MONITOR, HRESULT},
     register, ClrProfiler, CorProfilerCallback, CorProfilerCallback2, CorProfilerCallback3,
     CorProfilerCallback4, CorProfilerCallback5, CorProfilerCallback6, CorProfilerCallback7,
-    CorProfilerCallback8, CorProfilerCallback9, CorProfilerInfo, ProfilerInfo,
+    CorProfilerCallback8, CorProfilerCallback9, CorProfilerInfo, MetadataImportTrait, ProfilerInfo,
 };
 use uuid::Uuid;
 
@@ -43,6 +44,23 @@ impl CorProfilerCallback for Profiler {
         function_id: FunctionID,
         _is_safe_to_block: bool,
     ) -> Result<(), HRESULT> {
+        let function_info = self.profiler_info().get_function_info(function_id)?;
+        let module_metadata = self
+            .profiler_info()
+            .get_module_metadata(function_info.module_id, CorOpenFlags::ofRead)?;
+        let method_props = module_metadata.get_method_props(function_info.token)?;
+        let il_body = self
+            .profiler_info()
+            .get_il_function_body(function_info.module_id, function_info.token)?;
+        if method_props.name == "TMethod" || method_props.name == "FMethod" {
+            let method = Method::new(il_body.method_header, il_body.method_size).unwrap();
+            println!("{:?}", method);
+            println!(
+                "{} {:#010b} {:#010b} {:#010b}",
+                method_props.name, method.body[0], method.body[1], method.body[2]
+            );
+            println!("HERE");
+        }
         // 1. Modify method header
         // 2. Add a prologue
         // 3. Add an epilogue

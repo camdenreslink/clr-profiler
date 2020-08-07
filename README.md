@@ -51,11 +51,3 @@ Some Helpful Resources:
 - Create facility to run tests against multiple .net versions. For example, here is linux setup for [side-by-side .net core installations](https://www.hanselman.com/blog/SideBySideUserScopedNETCoreInstallationsOnLinuxWithDotnetinstallsh.aspx).
 - A potential source of bugs in the `ProfilerInfo` struct, is when an `S_OK` hresult is returned, but one of the out pointer parameters can be null. These need explicitly checked if they are null and wrapped in an `Option`. If we just dereference, this is undefined behavior! The Microsoft documentation is spotty on which out parameters can be null. Sometimes it is mentioned in the remarks.
 
-## What transformations are we making to methods?
-
-- Use FFI types everywhere. A "roadmap" or "future development" task will be to create idiomatic rust types.
-- No raw pointers should be exposed.
-- Convert pointers to arrays to array slices if it will be read-only. Convert to `&mut some_array` if the vector needs modified.
-- Create return types rather than passing in mutable references to be populated. These should reference FFI types.
-- Some of the primitive types can be converted to rusty types depending on the context, e.g. `BOOL`, `ULONG`
-- 

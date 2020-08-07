@@ -7,7 +7,17 @@ namespace HelloWorld
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello, World!");
+            TMethod();
+            FMethod();
+        }
+        static void TMethod()
+        {
+            Console.WriteLine("Hello, Tiny World!");
+        }
+        static void FMethod()
+        {
+            var s = "Hello, Fat World!";
+            Console.WriteLine(s);
         }
     }
 }

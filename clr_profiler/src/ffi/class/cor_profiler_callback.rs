@@ -1013,9 +1013,10 @@ impl<T: CorProfilerCallback9> CorProfilerCallback<T> {
         finalizerFlags: DWORD,
         objectID: ObjectID,
     ) -> HRESULT {
-        let result = self
-            .profiler
-            .finalizeable_object_queued(COR_PRF_FINALIZER_FLAGS::from(finalizerFlags), objectID);
+        let result = self.profiler.finalizeable_object_queued(
+            COR_PRF_FINALIZER_FLAGS::from_bits(finalizerFlags).unwrap(),
+            objectID,
+        );
         match result {
             Ok(_) => S_OK,
             Err(error) => error,

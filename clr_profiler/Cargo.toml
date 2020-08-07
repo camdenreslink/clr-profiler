@@ -10,3 +10,4 @@ repository = "https://github.com/camdenreslink/clr-profiler"
 clr_profiler_macros = { version = "0.1.0", path = "../clr_profiler_macros" }
 uuid = "0.8"
 widestring = "0.4.2"
+bitflags = "1.2.1"

@@ -6,8 +6,8 @@ use crate::{
         FunctionEnter, FunctionEnter2, FunctionEnter3, FunctionEnter3WithInfo, FunctionID,
         FunctionIDMapper, FunctionIDMapper2, FunctionLeave, FunctionLeave2, FunctionLeave3,
         FunctionLeave3WithInfo, FunctionTailcall, FunctionTailcall2, FunctionTailcall3,
-        FunctionTailcall3WithInfo, IMetaDataImport2, MetaDataImport, MethodMalloc, ModuleID,
-        ObjectID, ObjectReferenceCallback, ReJITID, StackSnapshotCallback, ThreadID, BOOL, BYTE,
+        FunctionTailcall3WithInfo, IMetaDataImport2, MethodMalloc, ModuleID, ObjectID,
+        ObjectReferenceCallback, ReJITID, StackSnapshotCallback, ThreadID, BOOL, BYTE,
         COR_DEBUG_IL_TO_NATIVE_MAP, COR_FIELD_OFFSET, COR_IL_MAP, COR_PRF_CODE_INFO,
         COR_PRF_ELT_INFO, COR_PRF_EX_CLAUSE_INFO, COR_PRF_FRAME_INFO, COR_PRF_GC_GENERATION_RANGE,
         COR_PRF_HIGH_MONITOR, COR_PRF_MODULE_FLAGS, COR_PRF_MONITOR, COR_PRF_REJIT_FLAGS,
@@ -19,7 +19,8 @@ use crate::{
     CorProfilerInfo4, CorProfilerInfo5, CorProfilerInfo6, CorProfilerInfo7, CorProfilerInfo8,
     CorProfilerInfo9, DynamicFunctionInfo, EnumNgenModuleMethodsInliningThisMethod, EventMask2,
     FunctionAndRejit, FunctionEnter3Info, FunctionInfo, FunctionInfo2, FunctionLeave3Info,
-    FunctionTokenAndMetadata, IlFunctionBody, ModuleInfo, ModuleInfo2, RuntimeInfo, StringLayout,
+    FunctionTokenAndMetadata, IlFunctionBody, MetadataImport, ModuleInfo, ModuleInfo2, RuntimeInfo,
+    StringLayout,
 };
 use std::{mem::MaybeUninit, ptr};
 use uuid::Uuid;
@@ -62,7 +63,7 @@ impl CorProfilerInfo for ProfilerInfo {
         match hr {
             S_OK => {
                 let events = unsafe { events.assume_init() };
-                Ok(COR_PRF_MONITOR::from(events))
+                Ok(COR_PRF_MONITOR::from_bits(events).unwrap())
             }
             _ => Err(hr),
         }
@@ -192,7 +193,7 @@ impl CorProfilerInfo for ProfilerInfo {
         }
     }
     fn set_event_mask(&self, events: COR_PRF_MONITOR) -> Result<(), HRESULT> {
-        let events = events as DWORD;
+        let events = events.bits();
         let hr = unsafe { self.info().SetEventMask(events) };
         match hr {
             S_OK => Ok(()),
@@ -302,13 +303,14 @@ impl CorProfilerInfo for ProfilerInfo {
         &self,
         module_id: ModuleID,
         open_flags: CorOpenFlags,
-    ) -> Result<&mut MetaDataImport, HRESULT> {
+    ) -> Result<MetadataImport, HRESULT> {
         let mut metadata_import = MaybeUninit::uninit();
-        let riid = IMetaDataImport2::IID; // TODO: This needs to come from an IMetaDataImport implementation
+        let open_flags = open_flags.bits();
+        let riid = IMetaDataImport2::IID;
         let hr = unsafe {
             self.info().GetModuleMetaData(
                 module_id,
-                open_flags as DWORD,
+                open_flags,
                 &riid,
                 metadata_import.as_mut_ptr(),
             )
@@ -317,6 +319,7 @@ impl CorProfilerInfo for ProfilerInfo {
         match hr {
             S_OK => {
                 let metadata_import = unsafe { metadata_import.assume_init().as_mut().unwrap() };
+                let metadata_import = MetadataImport::new(metadata_import);
                 Ok(metadata_import)
             }
             _ => Err(hr),
@@ -1418,6 +1421,7 @@ impl CorProfilerInfo3 for ProfilerInfo {
                 let base_load_address = unsafe { base_load_address.assume_init() };
                 let assembly_id = unsafe { assembly_id.assume_init() };
                 let module_flags = unsafe { module_flags.assume_init() };
+                let module_flags = COR_PRF_MODULE_FLAGS::from_bits(module_flags).unwrap();
                 let file_name = U16CString::from_vec_with_nul(file_name_buffer)
                     .unwrap()
                     .to_string_lossy();
@@ -1425,7 +1429,7 @@ impl CorProfilerInfo3 for ProfilerInfo {
                     base_load_address,
                     file_name,
                     assembly_id,
-                    module_flags: COR_PRF_MODULE_FLAGS::from(module_flags),
+                    module_flags,
                 })
             }
             _ => Err(hr),
@@ -1656,8 +1660,8 @@ impl CorProfilerInfo5 for ProfilerInfo {
                 let events_low = unsafe { events_low.assume_init() };
                 let events_high = unsafe { events_high.assume_init() };
                 Ok(EventMask2 {
-                    events_low: COR_PRF_MONITOR::from(events_low),
-                    events_high: COR_PRF_HIGH_MONITOR::from(events_high),
+                    events_low: COR_PRF_MONITOR::from_bits(events_low).unwrap(),
+                    events_high: COR_PRF_HIGH_MONITOR::from_bits(events_high).unwrap(),
                 })
             }
             _ => Err(hr),
@@ -1668,8 +1672,8 @@ impl CorProfilerInfo5 for ProfilerInfo {
         events_low: COR_PRF_MONITOR,
         events_high: COR_PRF_HIGH_MONITOR,
     ) -> Result<(), HRESULT> {
-        let events_low = events_low as DWORD;
-        let events_high = events_high as DWORD;
+        let events_low = events_low.bits();
+        let events_high = events_high.bits();
         let hr = unsafe { self.info().SetEventMask2(events_low, events_high) };
         match hr {
             S_OK => Ok(()),
@@ -2002,7 +2006,7 @@ impl CorProfilerInfo10 for ProfilerInfo {
         module_ids: &[ModuleID],
         method_ids: &[mdMethodDef], // TODO: Maybe we want the pairs to be actual tuples. Simple zip op.
     ) -> Result<(), HRESULT> {
-        let dw_rejit_flags = dw_rejit_flags as DWORD;
+        let dw_rejit_flags = dw_rejit_flags.bits();
         let methods_length = module_ids.len() as u32;
         let module_ids = module_ids.as_ptr();
         let method_ids = method_ids.as_ptr();

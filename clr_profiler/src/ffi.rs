@@ -1,4 +1,4 @@
-#![allow(non_camel_case_types, non_snake_case)]
+#![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
 mod class;
 mod hresult;
 mod interface;
@@ -415,133 +415,119 @@ pub struct COR_PRF_FUNCTION {
     functionId: FunctionID,
     reJitId: ReJITID,
 }
-#[repr(C)]
-#[derive(Debug, PartialEq)]
-pub enum COR_PRF_MONITOR {
-    COR_PRF_MONITOR_NONE = 0,
-    COR_PRF_MONITOR_FUNCTION_UNLOADS = 0x1,
-    COR_PRF_MONITOR_CLASS_LOADS = 0x2,
-    COR_PRF_MONITOR_MODULE_LOADS = 0x4,
-    COR_PRF_MONITOR_ASSEMBLY_LOADS = 0x8,
-    COR_PRF_MONITOR_APPDOMAIN_LOADS = 0x10,
-    COR_PRF_MONITOR_JIT_COMPILATION = 0x20,
-    COR_PRF_MONITOR_EXCEPTIONS = 0x40,
-    COR_PRF_MONITOR_GC = 0x80,
-    COR_PRF_MONITOR_OBJECT_ALLOCATED = 0x100,
-    COR_PRF_MONITOR_THREADS = 0x200,
-    COR_PRF_MONITOR_REMOTING = 0x400,
-    COR_PRF_MONITOR_CODE_TRANSITIONS = 0x800,
-    COR_PRF_MONITOR_ENTERLEAVE = 0x1000,
-    COR_PRF_MONITOR_CCW = 0x2000,
-    COR_PRF_MONITOR_REMOTING_COOKIE = 0x4000 | COR_PRF_MONITOR::COR_PRF_MONITOR_REMOTING as isize,
-    COR_PRF_MONITOR_REMOTING_ASYNC = 0x8000 | COR_PRF_MONITOR::COR_PRF_MONITOR_REMOTING as isize,
-    COR_PRF_MONITOR_SUSPENDS = 0x10000,
-    COR_PRF_MONITOR_CACHE_SEARCHES = 0x20000,
-    COR_PRF_ENABLE_REJIT = 0x40000,
-    COR_PRF_ENABLE_INPROC_DEBUGGING = 0x80000,
-    COR_PRF_ENABLE_JIT_MAPS = 0x100000,
-    COR_PRF_DISABLE_INLINING = 0x200000,
-    COR_PRF_DISABLE_OPTIMIZATIONS = 0x400000,
-    COR_PRF_ENABLE_OBJECT_ALLOCATED = 0x800000,
-    COR_PRF_MONITOR_CLR_EXCEPTIONS = 0x1000000,
-    COR_PRF_MONITOR_ALL = 0x107ffff,
-    COR_PRF_ENABLE_FUNCTION_ARGS = 0x2000000,
-    COR_PRF_ENABLE_FUNCTION_RETVAL = 0x4000000,
-    COR_PRF_ENABLE_FRAME_INFO = 0x8000000,
-    COR_PRF_ENABLE_STACK_SNAPSHOT = 0x10000000,
-    COR_PRF_USE_PROFILE_IMAGES = 0x20000000,
-    COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST = 0x40000000,
-    COR_PRF_DISABLE_ALL_NGEN_IMAGES = 0x80000000,
-    COR_PRF_ALL = 0x8fffffff,
-    COR_PRF_REQUIRE_PROFILE_IMAGE = (COR_PRF_MONITOR::COR_PRF_USE_PROFILE_IMAGES as isize
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_CODE_TRANSITIONS as isize)
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_ENTERLEAVE as isize,
-    COR_PRF_ALLOWABLE_AFTER_ATTACH = (((((((((COR_PRF_MONITOR::COR_PRF_MONITOR_THREADS
-        as isize
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_MODULE_LOADS as isize)
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_ASSEMBLY_LOADS as isize)
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_APPDOMAIN_LOADS as isize)
-        | COR_PRF_MONITOR::COR_PRF_ENABLE_STACK_SNAPSHOT as isize)
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_GC as isize)
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_SUSPENDS as isize)
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_CLASS_LOADS as isize)
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_EXCEPTIONS as isize)
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_JIT_COMPILATION as isize)
-        | COR_PRF_MONITOR::COR_PRF_ENABLE_REJIT as isize,
-    COR_PRF_MONITOR_IMMUTABLE = (((((((((((((COR_PRF_MONITOR::COR_PRF_MONITOR_CODE_TRANSITIONS
-        as isize
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_REMOTING as isize)
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_REMOTING_COOKIE as isize)
-        | COR_PRF_MONITOR::COR_PRF_MONITOR_REMOTING_ASYNC as isize)
-        | COR_PRF_MONITOR::COR_PRF_ENABLE_INPROC_DEBUGGING as isize)
-        | COR_PRF_MONITOR::COR_PRF_ENABLE_JIT_MAPS as isize)
-        | COR_PRF_MONITOR::COR_PRF_DISABLE_OPTIMIZATIONS as isize)
-        | COR_PRF_MONITOR::COR_PRF_DISABLE_INLINING as isize)
-        | COR_PRF_MONITOR::COR_PRF_ENABLE_OBJECT_ALLOCATED as isize)
-        | COR_PRF_MONITOR::COR_PRF_ENABLE_FUNCTION_ARGS as isize)
-        | COR_PRF_MONITOR::COR_PRF_ENABLE_FUNCTION_RETVAL as isize)
-        | COR_PRF_MONITOR::COR_PRF_ENABLE_FRAME_INFO as isize)
-        | COR_PRF_MONITOR::COR_PRF_USE_PROFILE_IMAGES as isize)
-        | COR_PRF_MONITOR::COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST as isize)
-        | COR_PRF_MONITOR::COR_PRF_DISABLE_ALL_NGEN_IMAGES as isize,
-}
-impl From<DWORD> for COR_PRF_MONITOR {
-    fn from(d: DWORD) -> Self {
-        unsafe { transmute(d as DWORD) }
+bitflags! {
+    pub struct COR_PRF_MONITOR: DWORD {
+        const COR_PRF_MONITOR_NONE = 0;
+        const COR_PRF_MONITOR_FUNCTION_UNLOADS = 0x1;
+        const COR_PRF_MONITOR_CLASS_LOADS = 0x2;
+        const COR_PRF_MONITOR_MODULE_LOADS = 0x4;
+        const COR_PRF_MONITOR_ASSEMBLY_LOADS = 0x8;
+        const COR_PRF_MONITOR_APPDOMAIN_LOADS = 0x10;
+        const COR_PRF_MONITOR_JIT_COMPILATION = 0x20;
+        const COR_PRF_MONITOR_EXCEPTIONS = 0x40;
+        const COR_PRF_MONITOR_GC = 0x80;
+        const COR_PRF_MONITOR_OBJECT_ALLOCATED = 0x100;
+        const COR_PRF_MONITOR_THREADS = 0x200;
+        const COR_PRF_MONITOR_REMOTING = 0x400;
+        const COR_PRF_MONITOR_CODE_TRANSITIONS = 0x800;
+        const COR_PRF_MONITOR_ENTERLEAVE = 0x1000;
+        const COR_PRF_MONITOR_CCW = 0x2000;
+        const COR_PRF_MONITOR_REMOTING_COOKIE = 0x4000 | Self::COR_PRF_MONITOR_REMOTING.bits;
+        const COR_PRF_MONITOR_REMOTING_ASYNC = 0x8000 | Self::COR_PRF_MONITOR_REMOTING.bits;
+        const COR_PRF_MONITOR_SUSPENDS = 0x10000;
+        const COR_PRF_MONITOR_CACHE_SEARCHES = 0x20000;
+        const COR_PRF_ENABLE_REJIT = 0x40000;
+        const COR_PRF_ENABLE_INPROC_DEBUGGING = 0x80000;
+        const COR_PRF_ENABLE_JIT_MAPS = 0x100000;
+        const COR_PRF_DISABLE_INLINING = 0x200000;
+        const COR_PRF_DISABLE_OPTIMIZATIONS = 0x400000;
+        const COR_PRF_ENABLE_OBJECT_ALLOCATED = 0x800000;
+        const COR_PRF_MONITOR_CLR_EXCEPTIONS = 0x1000000;
+        const COR_PRF_MONITOR_ALL = 0x107ffff;
+        const COR_PRF_ENABLE_FUNCTION_ARGS = 0x2000000;
+        const COR_PRF_ENABLE_FUNCTION_RETVAL = 0x4000000;
+        const COR_PRF_ENABLE_FRAME_INFO = 0x8000000;
+        const COR_PRF_ENABLE_STACK_SNAPSHOT = 0x10000000;
+        const COR_PRF_USE_PROFILE_IMAGES = 0x20000000;
+        const COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST = 0x40000000;
+        const COR_PRF_DISABLE_ALL_NGEN_IMAGES = 0x80000000;
+        const COR_PRF_ALL = 0x8fffffff;
+        const COR_PRF_REQUIRE_PROFILE_IMAGE = Self::COR_PRF_USE_PROFILE_IMAGES.bits
+            | Self::COR_PRF_MONITOR_CODE_TRANSITIONS.bits
+            | Self::COR_PRF_MONITOR_ENTERLEAVE.bits;
+        const COR_PRF_ALLOWABLE_AFTER_ATTACH = Self::COR_PRF_MONITOR_THREADS.bits
+            | Self::COR_PRF_MONITOR_MODULE_LOADS.bits
+            | Self::COR_PRF_MONITOR_ASSEMBLY_LOADS.bits
+            | Self::COR_PRF_MONITOR_APPDOMAIN_LOADS.bits
+            | Self::COR_PRF_ENABLE_STACK_SNAPSHOT.bits
+            | Self::COR_PRF_MONITOR_GC.bits
+            | Self::COR_PRF_MONITOR_SUSPENDS.bits
+            | Self::COR_PRF_MONITOR_CLASS_LOADS.bits
+            | Self::COR_PRF_MONITOR_EXCEPTIONS.bits
+            | Self::COR_PRF_MONITOR_JIT_COMPILATION.bits
+            | Self::COR_PRF_ENABLE_REJIT.bits;
+        const COR_PRF_MONITOR_IMMUTABLE = Self::COR_PRF_MONITOR_CODE_TRANSITIONS.bits
+            | Self::COR_PRF_MONITOR_REMOTING.bits
+            | Self::COR_PRF_MONITOR_REMOTING_COOKIE.bits
+            | Self::COR_PRF_MONITOR_REMOTING_ASYNC.bits
+            | Self::COR_PRF_ENABLE_INPROC_DEBUGGING.bits
+            | Self::COR_PRF_ENABLE_JIT_MAPS.bits
+            | Self::COR_PRF_DISABLE_OPTIMIZATIONS.bits
+            | Self::COR_PRF_DISABLE_INLINING.bits
+            | Self::COR_PRF_ENABLE_OBJECT_ALLOCATED.bits
+            | Self::COR_PRF_ENABLE_FUNCTION_ARGS.bits
+            | Self::COR_PRF_ENABLE_FUNCTION_RETVAL.bits
+            | Self::COR_PRF_ENABLE_FRAME_INFO.bits
+            | Self::COR_PRF_USE_PROFILE_IMAGES.bits
+            | Self::COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST.bits
+            | Self::COR_PRF_DISABLE_ALL_NGEN_IMAGES.bits;
     }
 }
 
-#[repr(C)]
-#[derive(Debug, PartialEq)]
-pub enum COR_PRF_HIGH_MONITOR {
-    COR_PRF_HIGH_MONITOR_NONE = 0,
-    COR_PRF_HIGH_ADD_ASSEMBLY_REFERENCES = 0x1,
-    COR_PRF_HIGH_IN_MEMORY_SYMBOLS_UPDATED = 0x2,
-    COR_PRF_HIGH_MONITOR_DYNAMIC_FUNCTION_UNLOADS = 0x4,
-    COR_PRF_HIGH_DISABLE_TIERED_COMPILATION = 0x8,
-    COR_PRF_HIGH_BASIC_GC = 0x10,
-    COR_PRF_HIGH_MONITOR_GC_MOVED_OBJECTS = 0x20,
-    // TODO: Duplicate discriminate values aren't allowed in rust c-like enums
-    // COR_PRF_HIGH_REQUIRE_PROFILE_IMAGE = 0,
-    COR_PRF_HIGH_MONITOR_LARGEOBJECT_ALLOCATED = 0x40,
-    COR_PRF_HIGH_ALLOWABLE_AFTER_ATTACH =
-        (((COR_PRF_HIGH_MONITOR::COR_PRF_HIGH_IN_MEMORY_SYMBOLS_UPDATED as isize
-            | COR_PRF_HIGH_MONITOR::COR_PRF_HIGH_MONITOR_DYNAMIC_FUNCTION_UNLOADS as isize)
-            | COR_PRF_HIGH_MONITOR::COR_PRF_HIGH_BASIC_GC as isize)
-            | COR_PRF_HIGH_MONITOR::COR_PRF_HIGH_MONITOR_GC_MOVED_OBJECTS as isize)
-            | COR_PRF_HIGH_MONITOR::COR_PRF_HIGH_MONITOR_LARGEOBJECT_ALLOCATED as isize,
-    // TODO: Duplicate discriminate values aren't allowed in rust c-like enums
-    // COR_PRF_HIGH_MONITOR_IMMUTABLE = COR_PRF_HIGH_MONITOR::COR_PRF_HIGH_DISABLE_TIERED_COMPILATION as isize,
-}
-impl From<DWORD> for COR_PRF_HIGH_MONITOR {
-    fn from(d: DWORD) -> Self {
-        unsafe { transmute(d as DWORD) }
+bitflags! {
+    pub struct COR_PRF_HIGH_MONITOR: DWORD {
+        const COR_PRF_HIGH_MONITOR_NONE = 0;
+        const COR_PRF_HIGH_ADD_ASSEMBLY_REFERENCES = 0x1;
+        const COR_PRF_HIGH_IN_MEMORY_SYMBOLS_UPDATED = 0x2;
+        const COR_PRF_HIGH_MONITOR_DYNAMIC_FUNCTION_UNLOADS = 0x4;
+        const COR_PRF_HIGH_DISABLE_TIERED_COMPILATION = 0x8;
+        const COR_PRF_HIGH_BASIC_GC = 0x10;
+        const COR_PRF_HIGH_MONITOR_GC_MOVED_OBJECTS = 0x20;
+        const COR_PRF_HIGH_REQUIRE_PROFILE_IMAGE = 0;
+        const COR_PRF_HIGH_MONITOR_LARGEOBJECT_ALLOCATED = 0x40;
+        const COR_PRF_HIGH_ALLOWABLE_AFTER_ATTACH = Self::COR_PRF_HIGH_IN_MEMORY_SYMBOLS_UPDATED.bits
+            | Self::COR_PRF_HIGH_MONITOR_DYNAMIC_FUNCTION_UNLOADS.bits
+            | Self::COR_PRF_HIGH_BASIC_GC.bits
+            | Self::COR_PRF_HIGH_MONITOR_GC_MOVED_OBJECTS.bits
+            | Self::COR_PRF_HIGH_MONITOR_LARGEOBJECT_ALLOCATED.bits;
+        const COR_PRF_HIGH_MONITOR_IMMUTABLE = COR_PRF_HIGH_MONITOR::COR_PRF_HIGH_DISABLE_TIERED_COMPILATION.bits;
     }
 }
+
 #[repr(C)]
 #[derive(Debug, PartialEq)]
 pub struct COR_PRF_METHOD {
     moduleId: ModuleID,
     methodId: mdMethodDef,
 }
-#[repr(C)]
-#[derive(Debug, PartialEq)]
-pub enum CorOpenFlags {
-    ofRead = 0x00000000,
-    ofWrite = 0x00000001,
-    // TODO: Duplicate discriminate values aren't allowed in rust c-like enums
-    // ofReadWriteMask = 0x00000001,
-    ofCopyMemory = 0x00000002,
-    ofCacheImage = 0x00000004,
-    ofManifestMetadata = 0x00000008,
-    ofReadOnly = 0x00000010,
-    ofTakeOwnership = 0x00000020,
-    ofNoTypeLib = 0x00000080,
-    ofNoTransform = 0x00001000,
-    ofReserved1 = 0x00000100,
-    ofReserved2 = 0x00000200,
-    ofReserved = 0xffffff40,
+bitflags! {
+    pub struct CorOpenFlags: DWORD {
+        const ofRead = 0x00000000;
+        const ofWrite = 0x00000001;
+        const ofReadWriteMask = 0x00000001;
+        const ofCopyMemory = 0x00000002;
+        const ofCacheImage = 0x00000004;
+        const ofManifestMetadata = 0x00000008;
+        const ofReadOnly = 0x00000010;
+        const ofTakeOwnership = 0x00000020;
+        const ofNoTypeLib = 0x00000080;
+        const ofNoTransform = 0x00001000;
+        const ofReserved1 = 0x00000100;
+        const ofReserved2 = 0x00000200;
+        const ofReserved = 0xffffff40;
+    }
 }
+
 #[repr(C)]
 #[derive(Debug, PartialEq)]
 pub enum COR_PRF_SNAPSHOT_INFO {
@@ -549,36 +535,26 @@ pub enum COR_PRF_SNAPSHOT_INFO {
     COR_PRF_SNAPSHOT_REGISTER_CONTEXT = 0x1,
     COR_PRF_SNAPSHOT_X86_OPTIMIZED = 0x2,
 }
-#[repr(C)]
-#[derive(Debug, PartialEq)]
-pub enum COR_PRF_MODULE_FLAGS {
-    COR_PRF_MODULE_DISK = 0x1,
-    COR_PRF_MODULE_NGEN = 0x2,
-    COR_PRF_MODULE_DYNAMIC = 0x4,
-    COR_PRF_MODULE_COLLECTIBLE = 0x8,
-    COR_PRF_MODULE_RESOURCE = 0x10,
-    COR_PRF_MODULE_FLAT_LAYOUT = 0x20,
-    COR_PRF_MODULE_WINDOWS_RUNTIME = 0x40,
-}
-impl From<DWORD> for COR_PRF_MODULE_FLAGS {
-    fn from(d: DWORD) -> Self {
-        unsafe { transmute(d as DWORD) }
+bitflags! {
+    pub struct COR_PRF_MODULE_FLAGS: DWORD {
+        const COR_PRF_MODULE_DISK = 0x1;
+        const COR_PRF_MODULE_NGEN = 0x2;
+        const COR_PRF_MODULE_DYNAMIC = 0x4;
+        const COR_PRF_MODULE_COLLECTIBLE = 0x8;
+        const COR_PRF_MODULE_RESOURCE = 0x10;
+        const COR_PRF_MODULE_FLAT_LAYOUT = 0x20;
+        const COR_PRF_MODULE_WINDOWS_RUNTIME = 0x40;
     }
 }
-#[repr(C)]
-#[derive(Debug, PartialEq)]
-pub enum COR_PRF_REJIT_FLAGS {
-    COR_PRF_REJIT_BLOCK_INLINING = 0x1,
-    COR_PRF_REJIT_INLINING_CALLBACKS = 0x2,
+bitflags! {
+    pub struct COR_PRF_REJIT_FLAGS: DWORD {
+        const COR_PRF_REJIT_BLOCK_INLINING = 0x1;
+        const COR_PRF_REJIT_INLINING_CALLBACKS = 0x2;
+    }
 }
-#[repr(C)]
-#[derive(Debug, PartialEq)]
-pub enum COR_PRF_FINALIZER_FLAGS {
-    COR_PRF_FINALIZER_CRITICAL = 0x1,
-}
-impl From<DWORD> for COR_PRF_FINALIZER_FLAGS {
-    fn from(d: DWORD) -> Self {
-        unsafe { transmute(d as DWORD) }
+bitflags! {
+    pub struct COR_PRF_FINALIZER_FLAGS: DWORD {
+        const COR_PRF_FINALIZER_CRITICAL = 0x1;
     }
 }
 #[repr(C)]
@@ -594,4 +570,90 @@ pub struct COR_SECATTR {
     tkCtor: mdMemberRef,             // Ref to constructor of security attribute.
     pCustomAttribute: *const c_void, // Blob describing ctor args and field/property values.
     cbCustomAttribute: ULONG,        // Length of the above blob.
+}
+bitflags! {
+    pub struct CorMethodAttr: DWORD {
+        // member access mask - Use this mask to retrieve accessibility information.
+        const mdMemberAccessMask          =   0x0007;
+        const mdPrivateScope              =   0x0000;     // Member not referenceable.
+        const mdPrivate                   =   0x0001;     // Accessible only by the parent type.
+        const mdFamANDAssem               =   0x0002;     // Accessible by sub-types only in this Assembly.
+        const mdAssem                     =   0x0003;     // Accessibly by anyone in the Assembly.
+        const mdFamily                    =   0x0004;     // Accessible only by type and sub-types.
+        const mdFamORAssem                =   0x0005;     // Accessibly by sub-types anywhere, plus anyone in assembly.
+        const mdPublic                    =   0x0006;     // Accessibly by anyone who has visibility to this scope.
+        // end member access mask
+
+        // method contract attributes.
+        const mdStatic                    =   0x0010;     // Defined on type, else per instance.
+        const mdFinal                     =   0x0020;     // Method may not be overridden.
+        const mdVirtual                   =   0x0040;     // Method virtual.
+        const mdHideBySig                 =   0x0080;     // Method hides by name+sig, else just by name.
+
+        // vtable layout mask - Use this mask to retrieve vtable attributes.
+        const mdVtableLayoutMask          =   0x0100;
+        const mdReuseSlot                 =   0x0000;     // The default.
+        const mdNewSlot                   =   0x0100;     // Method always gets a new slot in the vtable.
+        // end vtable layout mask
+
+        // method implementation attributes.
+        const mdCheckAccessOnOverride     =   0x0200;     // Overridability is the same as the visibility.
+        const mdAbstract                  =   0x0400;     // Method does not provide an implementation.
+        const mdSpecialName               =   0x0800;     // Method is special.  Name describes how.
+
+        // interop attributes
+        const mdPinvokeImpl               =   0x2000;     // Implementation is forwarded through pinvoke.
+        const mdUnmanagedExport           =   0x0008;     // Managed method exported via thunk to unmanaged code.
+
+        // Reserved flags for runtime use only.
+        const mdReservedMask              =   0xd000;
+        const mdRTSpecialName             =   0x1000;     // Runtime should check name encoding.
+        const mdHasSecurity               =   0x4000;     // Method has security associate with it.
+        const mdRequireSecObject          =   0x8000;     // Method calls another method containing security code.
+    }
+}
+bitflags! {
+    pub struct CorMethodImpl: DWORD
+{
+    // code impl mask
+    const miCodeTypeMask       =   0x0003;   // Flags about code type.
+    const miIL                 =   0x0000;   // Method impl is IL.
+    const miNative             =   0x0001;   // Method impl is native.
+    const miOPTIL              =   0x0002;   // Method impl is OPTIL
+    const miRuntime            =   0x0003;   // Method impl is provided by the runtime.
+    // end code impl mask
+
+    // managed mask
+    const miManagedMask        =   0x0004;   // Flags specifying whether the code is managed or unmanaged.
+    const miUnmanaged          =   0x0004;   // Method impl is unmanaged, otherwise managed.
+    const miManaged            =   0x0000;   // Method impl is managed.
+    // end managed mask
+
+    // implementation info and interop
+    const miForwardRef         =   0x0010;   // Indicates method is defined; used primarily in merge scenarios.
+    const miPreserveSig        =   0x0080;   // Indicates method sig is not to be mangled to do HRESULT conversion.
+
+    const miInternalCall       =   0x1000;   // Reserved for internal use.
+
+    const miSynchronized       =   0x0020;   // Method is single threaded through the body.
+    const miNoInlining         =   0x0008;   // Method may not be inlined.
+    const miAggressiveInlining =   0x0100;   // Method should be inlined if possible.
+    const miNoOptimization     =   0x0040;   // Method may not be optimized.
+    const miAggressiveOptimization = 0x0200; // Method may contain hot code and should be aggressively optimized.
+
+    // These are the flags that are allowed in MethodImplAttribute's Value
+    // property. This should include everything above except the code impl
+    // flags (which are used for MethodImplAttribute's MethodCodeType field).
+    const miUserMask = Self::miManagedMask.bits
+        | Self::miForwardRef.bits
+        | Self::miPreserveSig.bits
+        | Self::miInternalCall.bits
+        | Self::miSynchronized.bits
+        | Self::miNoInlining.bits
+        | Self::miAggressiveInlining.bits
+        | Self::miNoOptimization.bits
+        | Self::miAggressiveOptimization.bits;
+
+    const miMaxMethodImplVal   =   0xffff;   // Range check value
+}
 }

@@ -18,6 +18,7 @@ mod cor_profiler_info_6;
 mod cor_profiler_info_7;
 mod cor_profiler_info_8;
 mod cor_profiler_info_9;
+mod metadata_import_trait;
 
 pub use self::clr_profiler::ClrProfiler;
 pub use self::cor_profiler_callback::CorProfilerCallback;
@@ -39,3 +40,4 @@ pub use self::cor_profiler_info_6::CorProfilerInfo6;
 pub use self::cor_profiler_info_7::CorProfilerInfo7;
 pub use self::cor_profiler_info_8::CorProfilerInfo8;
 pub use self::cor_profiler_info_9::CorProfilerInfo9;
+pub use self::metadata_import_trait::MetadataImportTrait;

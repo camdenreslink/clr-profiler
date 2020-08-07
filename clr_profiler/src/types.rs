@@ -1,7 +1,7 @@
 use crate::ffi::{
     mdMethodDef, mdTypeDef, AppDomainID, AssemblyID, ClassID, ClrInstanceID, CorElementType,
-    CorProfilerMethodEnum, FunctionID, MetaDataImport, ModuleID, ProcessID, ReJITID, BYTE,
-    COR_FIELD_OFFSET, COR_PRF_FRAME_INFO, COR_PRF_FUNCTION_ARGUMENT_INFO,
+    CorMethodAttr, CorMethodImpl, CorProfilerMethodEnum, FunctionID, MetaDataImport, ModuleID,
+    ProcessID, ReJITID, BYTE, COR_FIELD_OFFSET, COR_PRF_FRAME_INFO, COR_PRF_FUNCTION_ARGUMENT_INFO,
     COR_PRF_FUNCTION_ARGUMENT_RANGE, COR_PRF_HIGH_MONITOR, COR_PRF_MODULE_FLAGS, COR_PRF_MONITOR,
     COR_PRF_RUNTIME_TYPE, LPCBYTE, PCCOR_SIGNATURE,
 };
@@ -109,4 +109,13 @@ pub struct DynamicFunctionInfo {
     pub sig: PCCOR_SIGNATURE,
     pub sig_length: u32,
     pub name: String,
+}
+pub struct MethodProps {
+    pub class_token: mdTypeDef,
+    pub name: String,
+    pub attr_flags: CorMethodAttr,
+    pub sig: PCCOR_SIGNATURE,
+    pub sig_length: u32,
+    pub rva: u32,
+    pub impl_flags: CorMethodImpl,
 }
