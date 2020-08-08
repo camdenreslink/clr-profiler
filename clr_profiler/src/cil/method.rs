@@ -1,6 +1,6 @@
 #![allow(non_upper_case_globals)]
 use crate::cil::Error;
-use std::{convert::TryInto, slice};
+use std::slice;
 
 bitflags! {
     pub struct MethodHeaderFlags: u8 {
