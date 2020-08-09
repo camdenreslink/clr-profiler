@@ -1,6 +1,8 @@
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum Error {
-    InvalidMethodHeaderFlags,
+    InvalidMethodHeader,
+    InvalidSectionHeader,
+    InvalidCil,
     InvalidCilOpcode,
 }

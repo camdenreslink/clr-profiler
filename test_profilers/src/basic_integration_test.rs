@@ -54,12 +54,7 @@ impl CorProfilerCallback for Profiler {
             .get_il_function_body(function_info.module_id, function_info.token)?;
         if method_props.name == "TMethod" || method_props.name == "FMethod" {
             let method = Method::new(il_body.method_header, il_body.method_size).unwrap();
-            println!("{:?}", method);
-            println!(
-                "{} {:#010b} {:#010b} {:#010b}",
-                method_props.name, method.body[0], method.body[1], method.body[2]
-            );
-            println!("HERE");
+            println!("{:#?}", method);
         }
         // 1. Modify method header
         // 2. Add a prologue

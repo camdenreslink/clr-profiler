@@ -1,5 +1,6 @@
 use crate::cil::Error;
 
+#[derive(Debug)]
 pub enum StackBehaviorPop {
     Pop0,
     Pop1,
@@ -22,6 +23,7 @@ pub enum StackBehaviorPop {
     PopRefPopIPop1,
     PopIPopIPopI,
 }
+#[derive(Debug)]
 pub enum StackBehaviorPush {
     Push0,
     Push1,
@@ -33,9 +35,11 @@ pub enum StackBehaviorPush {
     Push1Push1,
     VarPush,
 }
+#[derive(Debug)]
 pub enum OperandParams {
     InlineNone,
     ShortInlineVar,
+    InlineVar,
     ShortInlineI,
     InlineI,
     InlineI8,
@@ -50,8 +54,8 @@ pub enum OperandParams {
     InlineString,
     InlineField,
     InlineTok,
-    InlineVar,
 }
+#[derive(Debug)]
 pub enum OpcodeKind {
     Primitive,
     Macro,
@@ -59,6 +63,7 @@ pub enum OpcodeKind {
     Internal,
     Prefix,
 }
+#[derive(Debug)]
 pub enum ControlFlow {
     Next,
     Break,
@@ -69,7 +74,7 @@ pub enum ControlFlow {
     Throw,
     Meta,
 }
-
+#[derive(Debug)]
 pub struct Opcode {
     pub name: &'static str,
     pub stack_behavior_pop: StackBehaviorPop,
