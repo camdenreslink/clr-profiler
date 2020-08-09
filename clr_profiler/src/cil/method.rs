@@ -19,7 +19,7 @@ pub struct FatMethodHeader {
     pub local_var_sig_tok: u32,
 }
 impl FatMethodHeader {
-    pub const SIZE: u8 = 3;
+    pub const SIZE: u8 = 12;
 }
 #[derive(Debug)]
 pub struct TinyMethodHeader {
@@ -31,7 +31,7 @@ pub enum MethodHeader {
     Tiny(TinyMethodHeader),
 }
 impl MethodHeader {
-    fn parse_from_bytes(method_il: &[u8]) -> Result<Self, Error> {
+    fn from_bytes(method_il: &[u8]) -> Result<Self, Error> {
         let header_flags = method_il[0];
         if Self::is_tiny(header_flags) {
             // In a tiny header, the first 6 bits encode the code size
@@ -55,6 +55,30 @@ impl MethodHeader {
         } else {
             Err(Error::InvalidMethodHeader)
         }
+    }
+    fn into_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        match &self {
+            MethodHeader::Fat(header) => {
+                let mut flags = MethodHeaderFlags::CorILMethod_FatFormat.bits();
+                if header.more_sects {
+                    flags |= MethodHeaderFlags::CorILMethod_MoreSects.bits();
+                }
+                if header.init_locals {
+                    flags |= MethodHeaderFlags::CorILMethod_InitLocals.bits();
+                }
+                bytes.push(flags);
+                bytes.push(FatMethodHeader::SIZE.reverse_bits());
+                bytes.extend_from_slice(&header.max_stack.to_le_bytes());
+                bytes.extend_from_slice(&header.code_size.to_le_bytes());
+                bytes.extend_from_slice(&header.local_var_sig_tok.to_le_bytes());
+            }
+            MethodHeader::Tiny(header) => {
+                let byte = header.code_size << 2 | MethodHeaderFlags::CorILMethod_TinyFormat.bits();
+                bytes.push(byte);
+            }
+        }
+        bytes
     }
     fn more_sects(method_header_flags: u8) -> bool {
         check_flag(
@@ -114,7 +138,7 @@ pub struct FatSectionClause {
 }
 impl FatSectionClause {
     const LENGTH: usize = 24;
-    pub fn parse_from_bytes(il: &[u8]) -> Result<Self, Error> {
+    pub fn from_bytes(il: &[u8]) -> Result<Self, Error> {
         let flags = il_u8(il, 0)?;
         let is_exception = check_flag(
             flags,
@@ -170,7 +194,7 @@ pub struct SmallSectionClause {
 }
 impl SmallSectionClause {
     const LENGTH: usize = 12;
-    pub fn parse_from_bytes(il: &[u8]) -> Result<Self, Error> {
+    pub fn from_bytes(il: &[u8]) -> Result<Self, Error> {
         let flags = il_u8(il, 0)?;
         let is_exception = check_flag(
             flags,
@@ -212,7 +236,7 @@ pub enum Section {
     SmallSection(SmallSectionHeader, Vec<SmallSectionClause>),
 }
 impl Section {
-    fn parse_from_bytes(il: &[u8]) -> Result<Self, Error> {
+    fn from_bytes(il: &[u8]) -> Result<Self, Error> {
         let header_flags = il[0];
         let is_eh_table = Self::is_eh_table(header_flags);
         let more_sects = Self::more_sects(header_flags);
@@ -242,6 +266,78 @@ impl Section {
         } else {
             Err(Error::InvalidSectionHeader)
         }
+    }
+    fn into_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        match &self {
+            Section::FatSection(header, clauses) => {
+                let mut flags = SectionHeaderFlags::CorILMethod_Sect_FatFormat.bits();
+                if header.is_eh_table {
+                    flags |= SectionHeaderFlags::CorILMethod_Sect_EHTable.bits();
+                }
+                if header.more_sects {
+                    flags |= SectionHeaderFlags::CorILMethod_Sect_MoreSects.bits();
+                }
+                bytes.push(flags);
+                bytes.extend_from_slice(&header.data_size.to_le_bytes()[0..3]);
+                for clause in clauses.iter() {
+                    let mut flags =
+                        ExceptionHandlingClauseFlags::COR_ILEXCEPTION_CLAUSE_EXCEPTION.bits();
+                    if clause.is_filter {
+                        flags |= ExceptionHandlingClauseFlags::COR_ILEXCEPTION_CLAUSE_FILTER.bits();
+                    }
+                    if clause.is_finally {
+                        flags |=
+                            ExceptionHandlingClauseFlags::COR_ILEXCEPTION_CLAUSE_FINALLY.bits();
+                    }
+                    if clause.is_fault {
+                        flags |= ExceptionHandlingClauseFlags::COR_ILEXCEPTION_CLAUSE_FAULT.bits();
+                    }
+                    let flags = flags as u32;
+                    bytes.extend_from_slice(&flags.to_le_bytes());
+                    bytes.extend_from_slice(&clause.try_offset.to_le_bytes());
+                    bytes.extend_from_slice(&clause.try_length.to_le_bytes());
+                    bytes.extend_from_slice(&clause.handler_offset.to_le_bytes());
+                    bytes.extend_from_slice(&clause.handler_length.to_le_bytes());
+                    bytes.extend_from_slice(&clause.class_token_or_filter_offset.to_le_bytes());
+                }
+            }
+            Section::SmallSection(header, clauses) => {
+                let mut flags = 0u8;
+                if header.is_eh_table {
+                    flags |= SectionHeaderFlags::CorILMethod_Sect_EHTable.bits();
+                }
+                if header.more_sects {
+                    flags |= SectionHeaderFlags::CorILMethod_Sect_MoreSects.bits();
+                }
+                bytes.push(flags);
+                bytes.push(header.data_size);
+                bytes.push(0u8); // Padding for DWORD alignment
+                bytes.push(0u8); // Padding for DWORD alignment
+                for clause in clauses.iter() {
+                    let mut flags =
+                        ExceptionHandlingClauseFlags::COR_ILEXCEPTION_CLAUSE_EXCEPTION.bits();
+                    if clause.is_filter {
+                        flags |= ExceptionHandlingClauseFlags::COR_ILEXCEPTION_CLAUSE_FILTER.bits();
+                    }
+                    if clause.is_finally {
+                        flags |=
+                            ExceptionHandlingClauseFlags::COR_ILEXCEPTION_CLAUSE_FINALLY.bits();
+                    }
+                    if clause.is_fault {
+                        flags |= ExceptionHandlingClauseFlags::COR_ILEXCEPTION_CLAUSE_FAULT.bits();
+                    }
+                    let flags = flags as u16;
+                    bytes.extend_from_slice(&flags.to_le_bytes());
+                    bytes.extend_from_slice(&clause.try_offset.to_le_bytes());
+                    bytes.push(clause.try_length);
+                    bytes.extend_from_slice(&clause.handler_offset.to_le_bytes());
+                    bytes.push(clause.handler_length);
+                    bytes.extend_from_slice(&clause.class_token_or_filter_offset.to_le_bytes());
+                }
+            }
+        }
+        bytes
     }
     pub fn data_size(&self) -> usize {
         match self {
@@ -275,7 +371,7 @@ impl Section {
         let mut clauses = Vec::new();
         while index < il.len() {
             let il = &il[index..];
-            let clause = FatSectionClause::parse_from_bytes(il)?;
+            let clause = FatSectionClause::from_bytes(il)?;
             index += FatSectionClause::LENGTH;
             clauses.push(clause);
         }
@@ -286,7 +382,7 @@ impl Section {
         let mut clauses = Vec::new();
         while index < il.len() {
             let il = &il[index..];
-            let clause = SmallSectionClause::parse_from_bytes(il)?;
+            let clause = SmallSectionClause::from_bytes(il)?;
             index += SmallSectionClause::LENGTH;
             clauses.push(clause);
         }
@@ -302,7 +398,7 @@ pub struct Method {
 impl Method {
     pub fn new(method_header: *const u8, method_size: u32) -> Result<Self, Error> {
         let body = unsafe { slice::from_raw_parts(method_header, method_size as usize) };
-        let method_header = MethodHeader::parse_from_bytes(&body)?;
+        let method_header = MethodHeader::from_bytes(&body)?;
         let (instructions_start, instructions_end): (usize, usize) = match &method_header {
             MethodHeader::Fat(header) => (12, (12 + header.code_size - 1) as usize),
             MethodHeader::Tiny(header) => (1, header.code_size as usize),
@@ -315,7 +411,7 @@ impl Method {
                 let sections_bytes = &body[sections_start..];
                 Self::get_sections(sections_bytes)?
             }
-            _ => Vec::new(),
+            _ => Vec::new(), // only fat headers with the more sections flag set have additional sections
         };
         Ok(Method {
             method_header,
@@ -323,12 +419,40 @@ impl Method {
             sections,
         })
     }
+    pub fn into_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+
+        let mut method_header_bytes = self.method_header.into_bytes();
+        bytes.append(&mut method_header_bytes);
+
+        let mut instruction_bytes = self
+            .instructions
+            .iter()
+            .flat_map(|i| i.into_bytes())
+            .collect();
+        bytes.append(&mut instruction_bytes);
+
+        match &self.method_header {
+            MethodHeader::Fat(header) if header.more_sects => {
+                // Sections must be DWORD aligned. Add zero padding at the end to achieve alignment.
+                let padding_byte_size = 4 - bytes.len() % 4;
+                for _ in 0..padding_byte_size {
+                    bytes.push(0);
+                }
+                let mut section_bytes = self.sections.iter().flat_map(|s| s.into_bytes()).collect();
+                bytes.append(&mut section_bytes);
+            }
+            _ => (),
+        }
+
+        bytes
+    }
     fn get_instructions(il: &[u8]) -> Result<Vec<Instruction>, Error> {
         let mut index = 0;
         let mut instructions = Vec::new();
         while index < il.len() {
             let il = &il[index..];
-            let instruction = Instruction::parse_from_bytes(il)?;
+            let instruction = Instruction::from_bytes(il)?;
             index += instruction.length;
             instructions.push(instruction);
         }
@@ -339,7 +463,7 @@ impl Method {
         let mut sections = Vec::new();
         while index < il.len() {
             let il = &il[index..];
-            let section = Section::parse_from_bytes(il)?;
+            let section = Section::from_bytes(il)?;
             index += section.data_size();
             sections.push(section);
         }

@@ -1,10 +1,11 @@
 use clr_profiler::{
     cil::Method,
-    ffi::{CorOpenFlags, FunctionID, COR_PRF_MONITOR, HRESULT},
+    ffi::{CorOpenFlags, FunctionID, COR_PRF_MONITOR, E_FAIL, HRESULT},
     register, ClrProfiler, CorProfilerCallback, CorProfilerCallback2, CorProfilerCallback3,
     CorProfilerCallback4, CorProfilerCallback5, CorProfilerCallback6, CorProfilerCallback7,
     CorProfilerCallback8, CorProfilerCallback9, CorProfilerInfo, MetadataImportTrait, ProfilerInfo,
 };
+use std::slice;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -53,8 +54,10 @@ impl CorProfilerCallback for Profiler {
             .profiler_info()
             .get_il_function_body(function_info.module_id, function_info.token)?;
         if method_props.name == "TMethod" || method_props.name == "FMethod" {
-            let method = Method::new(il_body.method_header, il_body.method_size).unwrap();
-            println!("{:#?}", method);
+            let bytes = unsafe {
+                slice::from_raw_parts(il_body.method_header, il_body.method_size as usize)
+            };
+            let method = Method::new(il_body.method_header, il_body.method_size).or(Err(E_FAIL))?;
         }
         // 1. Modify method header
         // 2. Add a prologue

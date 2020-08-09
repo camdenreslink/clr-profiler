@@ -2,80 +2,6 @@ use crate::cil::{
     il_f32, il_f64, il_i16, il_i32, il_i64, il_i8, il_u32, il_u8, Error, Opcode, OperandParams,
 };
 
-// <int32 (target)>
-// beq <int32 (target)>
-
-// <int8 (target)>
-// beq.s <int8 (target)>
-
-// <typeTok>
-// box <typeTok>
-
-// <method>
-// call <method>
-
-// <callsitedescr>
-// calli <callsitedescr>
-
-// <class>
-// castclass <class>
-
-// <thisType>
-// constrained. <thisType>
-
-// <field>
-// ldfld <field>
-
-// <uint8 (num)>
-// ldarg.s <uint8 (num)>
-
-// <uint16 (num)>
-// ldarg <uint16 (num)>
-
-// <int8 (num)>
-// ldc.i4.s <int8 (num)>
-
-// <int32 (num)>
-// ldc.i4 <int32 (num)>
-
-// <int64 (num)>
-// ldc.i8 <int64 (num)>
-
-// <float32 (num)>
-// ldc.r4 <float32 (num)>
-
-// <float64 (num)>
-// ldc.r8 <float64 (num)>
-
-// <uint16 (indx)>
-// ldloc <uint16 (indx)>
-
-// <uint8 (indx)>
-// ldloc.s <uint8 (indx)>
-
-// <string>
-// ldstr <string>
-
-// <etype>
-// newarr <etype>
-
-// <ctor>
-// newobj <ctor>
-
-// { typecheck, rangecheck, nullcheck }
-// no. { typecheck, rangecheck, nullcheck }
-
-// <type>
-// refanyval <type>
-
-// <uint32, int32, int32 (t1..tN)>
-// switch <uint32, int32, int32 (t1..tN)>
-
-// (alignment)
-// unaligned. (alignment)
-
-// <valuetype>
-// unbox <valuetype>
 #[derive(Debug)]
 pub enum Operand {
     InlineNone,
@@ -111,7 +37,7 @@ impl Operand {
             Self::InlineSig(_) => 4,
             Self::ShortInlineBrTarget(_) => 1,
             Self::InlineBrTarget(_) => 4,
-            Self::InlineSwitch(length, _) => *length as usize + 1,
+            Self::InlineSwitch(length, _) => ((*length + 1) * 4) as usize,
             Self::InlineType(_) => 4,
             Self::InlineString(_) => 4,
             Self::InlineField(_) => 4,
@@ -130,7 +56,7 @@ impl Instruction {
     /// Attempts to parse the first instruction at the beginning
     /// of the given byte array. Array must be at a valid instruction
     /// boundary.
-    pub fn parse_from_bytes(il: &[u8]) -> Result<Self, Error> {
+    pub fn from_bytes(il: &[u8]) -> Result<Self, Error> {
         let byte_1 = il_u8(il, 0)?;
         let opcode = if byte_1 == 0xFE {
             // In this case, we have a multibyte opcode
@@ -219,5 +145,51 @@ impl Instruction {
             operand: operand,
             length,
         })
+    }
+    pub fn into_bytes(&self) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        if self.opcode.length == 1 {
+            bytes.push(self.opcode.byte_2);
+        } else if self.opcode.length == 2 {
+            bytes.push(self.opcode.byte_1);
+            bytes.push(self.opcode.byte_2);
+        }
+        match &self.operand {
+            Operand::InlineNone => (),
+            Operand::ShortInlineVar(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineVar(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::ShortInlineI(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineI(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineI8(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::ShortInlineR(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineR(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineMethod(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineSig(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::ShortInlineBrTarget(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineBrTarget(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineSwitch(length, val) => {
+                bytes.extend_from_slice(&length.to_le_bytes());
+                println!(
+                    "{}!!! {}!!! {:?}!!! {:?}!!! {:?}!!! {:?}!!! {:?}!!! {:?}!!!",
+                    length,
+                    val.len(),
+                    length.to_le_bytes(),
+                    val[0].to_le_bytes(),
+                    val[1].to_le_bytes(),
+                    val[2].to_le_bytes(),
+                    val[3].to_le_bytes(),
+                    val[4].to_le_bytes(),
+                );
+                let mut target_bytes: Vec<u8> =
+                    val.iter().flat_map(|s| s.to_le_bytes().to_vec()).collect();
+                bytes.append(&mut target_bytes);
+            }
+            Operand::InlineType(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineString(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineField(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+            Operand::InlineTok(val) => bytes.extend_from_slice(&val.to_le_bytes()),
+        }
+
+        bytes
     }
 }
